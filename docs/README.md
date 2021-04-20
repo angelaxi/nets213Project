@@ -97,7 +97,7 @@ List with the following columns:
             * rows: Dataframe from HIT result
             * worker_quality: Dictionary storing initial confusion matrix for each worker
             * iter_num: Number of iterations to perform EM algorithm or until convergence if iter_num is less than 0
-            output: Sorted list of image urls and their respective string labels
+            * output: Sorted list of image urls and their respective string labels
 ## sample_data
 Sample data to test quality control and aggregation modules
 * sample_hit_result.csv: sample hit result that is input to both the quality control and aggregation module
