@@ -59,6 +59,7 @@ List with the following columns:
 * WorkerId: Id of the worker who completed tasks
 * Accuracy: Percentage accuracy on quality control images
 * GoodWorker: True if and only if the worker has 90% percent accuracy for all image categories: Wearing Mask Correctly, Wearing Mask Incorrectly, and Not Wearing Mask
+
 Gold Standard Label Confusion Matrix: A 3x3 confusion matrix for our 3 image categories
 ## Aggregation 
 ### Input
