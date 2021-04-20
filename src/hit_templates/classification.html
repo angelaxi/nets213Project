@@ -1,0 +1,90 @@
+<script src="https://assets.crowd.aws/crowd-html-elements.js"></script>
+<link href="https://s3.amazonaws.com/mturk-public/bs30/css/bootstrap.min.css" rel="stylesheet" />
+<link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" integrity="sha384-IS73LIqjtYesmURkDE9MXKbXqYA8rvKEp/ghicjem7Vc3mGRdQRptJSz60tvrB6+" rel="stylesheet" />
+<meta content="width=device-width,initial-scale=1" name="viewport" />
+<section class="container" id="ModerationOfAnImage">
+<div class="row">
+    <div class="col-xs-12 col-md-12">
+        <div class="panel panel-primary">
+            <a class="panel-heading" href="javascript:void(0);" id="collapseTrigger">
+                <strong>Classify each image as one of the following:</strong>&nbsp;
+                <span class="collapse-text">(Click to expand)</span> 
+            </a>
+            <div class="panel-body" id="instructionBody">
+                <ul>
+                    <li>Wearing Mask Correctly: Mask covers nose and mouth</li>
+                    <li>Wearing Mask Incorrectly: Mask does not completely cover nose or mouth</li>
+                    <li>Not Wearing Mask: Not wearing mask at all</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<crowd-form answer-format="flatten-objects">
+    <div class="row" id="work_content">
+        <script type="text/javascript">
+            function randOrd(){
+                return (Math.round(Math.random())-0.5); 
+            }
+            
+            var images = ["${image1}", "${image2}", "${image3}", "${image4}", "${image5}", "${image6}", "${wmc_qc}", "${wmi_qc}", "${nwm_qc}"];
+            var names = ["image1", "image2", "image3", "image4", "image5", "image6", "wmc_qc", "wmi_qc", "nwm_qc"];
+            var word = "Mask Image";
+            
+            var order = new Array(images.length);
+            for( i = 0; i < order.length; i++) {
+                order[i] = i;
+            } 
+            order.sort( randOrd );
+            
+            for( i = 0; i < images.length; i++) {
+                var id = order[i]+1;
+                image = images[order[i]];
+                name = names[order[i]]
+                document.write('<div class="col-xs-12 col-sm-6 col-md-4">');
+                document.write('<div class="thumbnail">');
+                document.write('<img alt="' +  word +'" class="img-responsive center-block" src="' + image + '" />'); 
+                document.write('<select name="' + name + '" required>');
+                document.write('<option value="">(Please select)</option><option>Wearing Mask Correctly</option><option>Wearing Mask Incorrectly</option><option>Not Wearing Mask</option></select></div>');
+                document.write('</div>');
+            }
+        </script>
+    </div>
+</crowd-form>
+</section>
+<style type="text/css">
+    .thumbnail:hover{
+        border: 1px solid #337ab7;
+    }
+    .thumbnail img{
+        height:300px;
+    }
+    #collapseTrigger{
+        color:#fff;
+        display: block;
+        text-decoration: none;
+    }
+    select {
+        display: block;
+        margin: 0 auto;
+    }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js" integrity="sha384-s1ITto93iSMDxlp/79qhWHi+LsIi9Gx6yL+cOKDuymvihkfol83TYbLbOw+W/wv4" crossorigin="anonymous"></script>
+<script>
+  $(document).ready(function() {
+    var content = $('#instructionBody');
+    var trigger = $('#collapseTrigger');
+    $('.collapse-text').text('(Click to collapse)');
+    trigger.click(function(){
+      content.toggle();
+      var isVisible = content.is(':visible');
+      if (isVisible) {
+        $('.collapse-text').text('(Click to collapse)');
+      } else{
+        $('.collapse-text').text('(Click to expand)');
+      }
+    });
+  });
+</script>

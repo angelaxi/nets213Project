@@ -1,0 +1,6 @@
+WorkerId,Accuracy,GoodWorker
+1,1.0,True
+2,0.833,False
+3,0.667,False
+4,0.667,False
+5,1.0,True
