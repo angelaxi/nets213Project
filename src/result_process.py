@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 from collections import defaultdict
+from os import mkdir
+from os.path import join, isdir
 
 label_map = {
     "Wearing Mask Correctly": 0,
@@ -33,6 +35,7 @@ def worker_quality(df):
     return sorted([
         (
             k, 
+            sum([sum(l) for l in m]),
             # Compute total accuracy
             round((m[0][0] + m[1][1] + m[2][2]) / sum([sum(l) for l in m]), 3),
             # Check if worker is accurate for each classification label
@@ -113,12 +116,17 @@ def em_iteration(rows, worker_qual):
     return votes, worker_qual
 
 def em_vote(rows, worker_qual, iter_num):
+    # Set worker quality to perfect if worker_qual is not a dictionary
+    if not isinstance(worker_qual, dict):
+        worker_qual = defaultdict(lambda: [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
     votes = dict()
+    # Iterate for iter_num
     if (iter_num >= 0):   
         for _ in range(iter_num):
             votes, worker_qual = em_iteration(rows, worker_qual)
+    # Iterate until convergence
     else:
-        prev_worker_qual = dict()
+        prev_worker_qual = None
         while prev_worker_qual != worker_qual:
             prev_worker_qual = worker_qual
             votes, worker_qual = em_iteration(rows, worker_qual)
@@ -128,20 +136,53 @@ def em_vote(rows, worker_qual, iter_num):
         for k, v in votes.items()
     ])
 
+def em_vote(rows, worker_qual, iter_num):
+    # Set worker quality to perfect if worker_qual is not a dictionary
+    if not isinstance(worker_qual, dict):
+        worker_qual = defaultdict(lambda: [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    votes = dict()
+    # Iterate for iter_num
+    if (iter_num >= 0):   
+        for _ in range(iter_num):
+            votes, worker_qual = em_iteration(rows, worker_qual)
+    # Iterate until convergence
+    else:
+        prev_worker_qual = None
+        while prev_worker_qual != worker_qual:
+            prev_worker_qual = worker_qual
+            votes, worker_qual = em_iteration(rows, worker_qual)
+    return sorted([
+        # Get label corresponding to index of max weight
+        (k, inverse_label_map[max(range(len(v)), key=v.__getitem__)])
+        for k, v in votes.items()
+    ])
 
 def main():
+    data_dir = '../data/'
+    analysis_dir = 'analysis'
+    # Create analysis directory
+    if not isdir(join(data_dir, analysis_dir)):
+        mkdir(join(data_dir, analysis_dir))
     # Read in CVS result file with pandas
-    # PLEASE DO NOT CHANGE
-    result_df = pd.read_csv('sample_data/sample_hit_results.csv')
-
-    # Call functions and output required CSV files
+    result_df = pd.read_csv(join(data_dir, 'classification_hit_output.csv'))
+    # Compute worker quality and confusion matrix from gold standard labels
     quality, cm = worker_quality(result_df)
-    df = pd.DataFrame(quality, columns=['WorkerId', 'Accuracy', 'GoodWorker'])
-    df.to_csv('sample_data/sample_qc_output.csv', index=False)
+    df = pd.DataFrame(quality, columns=['WorkerId', 'TasksCompleted', 'Accuracy', 'GoodWorker'])
+    df.to_csv(join(data_dir, analysis_dir, 'gold_standard_quality.csv'), index=False)
     
-    labels = em_vote(result_df, cm, -1)
-    df = pd.DataFrame(labels, columns=['ImageUrl', 'Label'])
-    df.to_csv('sample_data/sample_agg_output.csv', index=False)
+    # 1 iteration EM with gold standard label performance as initial quality
+    unconverged_weighted_labels = em_vote(result_df, cm, 1)
+    # Converged EM with gold standard label performance as initial quality
+    #converged_weighted_labels = em_vote(result_df, cm, -1)
+    # 1 iteration EM assuming all workers are initially perfect
+    #unconverged_unweighted_labels = em_vote(result_df, None, 1)
+    # Converged EM assuming all workers are initially perfect
+    #converged_unweighted_labels = em_vote(result_df, None, -1)
+
+    s3 = 'https://wym-mask-images.s3.amazonaws.com/crop/'
+    labels = [(url.replace(s3, ''), label) for (url, label) in unconverged_weighted_labels]
+    df = pd.DataFrame(labels, columns=['Image', 'Label'])
+    df.to_csv(join(data_dir, analysis_dir, 'image_labels.csv'), index=False)
     
     
     

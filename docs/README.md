@@ -65,6 +65,7 @@ Dataframe result from our Image Labeling HIT task with the following columns:
 ### Output
 List with the following columns:
 - WorkerId: Id of the worker who completed tasks
+- TasksCompleted: Number of tasks completed by worker
 - Accuracy: Percentage accuracy on quality control images
 - GoodWorker: True if and only if the worker has 90% percent accuracy for all image categories: Wearing Mask Correctly, Wearing Mask Incorrectly, and Not Wearing Mask
 
@@ -76,7 +77,7 @@ Same Dataframe as Quality Control input
 Confusion Matrix from Quality Control output
 ### Output
 List with the following columns:
-- ImageUrl: Image url
+- Image: Image file name
 - Label: Image label of either Wearing Mask Correctly, Wearing Mask Incorrectly, or Not Wearing Mask.
 # Code
 - <b>result_process.py</b>: contains quality control and aggregation functions to process results
@@ -84,7 +85,7 @@ List with the following columns:
         - <i>worker_quality(df)</i>: Computes worker quality from gold standard label answers
             - df: Dataframe from HIT result
             - output
-                - List of three tuples in the following order: WorkerId, Gold standard label accuracy, Whether the worker is a good worker or not
+                - List of three tuples in the following order: WorkerId, Number of tasks completed, Gold standard label accuracy, Whether the worker is a good worker or not
                 - Gold standard label confusion matrix
         - <i>em_worker_quality(rows, labels)</i>: Computes weighted worker quality
             - rows: Dataframe from HIT result
@@ -119,6 +120,6 @@ HTML code for HIT templates
 ## Future Considerations
 We have implemented the full version of our quality control and aggregation modules. We utilize gold standard labels to get an initial quality control check for our EM algorithm to start on. We then let our algorithm converge to receive our labels. That being said, for our final labels that we use to train our classifier, we will cross reference multiple versions of our algorithm and see if they match. For any inconsistencies, we will manually verify the classification label. We expect that there will be few inconsistencies since it should fairly obviously whether a person is wearing their mask correctly or not. In other words, we expect little variance in the data. The versions of our algorithm that we will cross-reference are as follows:
 - Converged EM with gold standard label performance as initial quality
-- Converged EM with assuming all workers are initially perfect
+- Converged EM assuming all workers are initially perfect
 - Majority vote: EM assuming all workers are initially perfect for 1 iteration
-- Weighted majority vote: EM with gold standard label performance as initial quality for 1 iteration
+- EM with gold standard label performance as initial quality for 1 iteration
