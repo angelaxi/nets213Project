@@ -107,15 +107,15 @@ def create_classification_hit_inputs():
 
 def main():
     # Create text file with bounding box input image urls on S3 bucket
-    #create_bounding_image_urls()
+    create_bounding_image_urls()
     # Create input CSVs for the bounding box HIT task
-    #create_bounding_hit_inputs()
+    create_bounding_hit_inputs()
     # Crop bounding box images based on bounding box HIT output and save cropped images
-    #crop_images()
+    crop_images()
     # Create text file with classification input image urls on S3 bucket
-    #create_classification_image_urls()
+    create_classification_image_urls()
     # Create CSV file inputs for classification HIT given gold standard labels
-    #create_classification_hit_inputs()
+    create_classification_hit_inputs()
 
 
 if __name__ == '__main__':

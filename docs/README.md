@@ -4,6 +4,9 @@ Our project, WYM - Wear Your Mask, is a live application that utilizes camera re
 ## data
 - bounding_images: directory containing all input images for bounding box HITs
 - classification_images: directory containing all input images for classification HITs
+- analysis: directory containing analysis files after performance quality control and aggregation
+    - gold_standard_quality.csv: quality control output with accuracy and good worker label for each worker
+    - image_labels.csv: aggregation output from running EM with gold standard performance as initial quality for 1 iteration
 - bounding_hit_input(0-1).csv: generated CSV input for bounding box HITs
 - bounding_hit_output.csv: output from bounding box HITs
 - bounding_images.txt: links to bounding box input images on S3 bucket
@@ -20,23 +23,23 @@ Contains code for the project as well as sample inputs and outputs to our code
 
 Refer to the Code section for more information about each file and any future improvements
 # Components
-## Collect images (1)
+## Collect images (1, Completed)
 - Find images and datasets online of people wearing masks, without masks, or wearing masks improperly
 - Store in S3 bucket
-## Bounding Box Task (1)
+## Bounding Box Task (1, Completed)
 - Provide images to MTurk workers to draw bounding boxes around faces of visible people
-## Crop Images (2)
+## Crop Images (2, Completed)
 - Using the bounding box data collected from workers, resize and crop images to fit the bounding box size in order to get closer pictures of faces
 - Write python code to automatically crop images based on bounding box data
 - Approve bounding box if all cropped images contain entire face and clear
-## Label Task (2) 
+## Label Task (2, Completed) 
 - Create MTurk HIT for workers to label the newly cropped pictures as Wearing Mask Correctly, Wearing Mask Incorrectly, or Not Wearing Mask.
 - Design html template to allow workers to label multiple images at once, including quality control images
-## Quality Control (2)
+## Quality Control (2, Completed)
 - Use gold standard labels for certain images in order to conduct a quality check on the worker’s labels
 - Have workers label multiple images at once with a couple prelabeled images mixed in
 - Write python code to compute worker quality based on gold standard labels
-## Aggregate Labels (2)
+## Aggregate Labels (2, Completed)
 - Use EM in conjunction with gold standard labels performance as initial worker quality to generate true label for each image
 - Write code to generate true labels using Expectation Maximization algorithm along with gold standard labels
 ## Train a Classifier (3)
@@ -108,6 +111,12 @@ List with the following columns:
             - iter_num: Number of iterations to perform EM algorithm or until convergence if iter_num is less than 0
             - output: Sorted list of image urls and their respective string labels
 - <b>hit_process.py</b>: contains functions to preprocess inputs for HITs and postprocess HIT outputs
+    - <i>create_bounding_image_urls()</i>: Create text file with bounding box input image urls on S3 bucket
+    - <i>create_bounding_hit_inputs()</i>: Create input CSVs for the bounding box HIT task
+    - <i>crop_images()</i>: Crop bounding box images based on bounding box HIT output and save cropped images
+    - <i>create_classification_image_urls()</i>: Create text file with classification input image urls on S3 bucket
+    - <i>create_classification_hit_inputs():</i>: Create CSV file inputs for classification HIT given gold standard labels
+
 ## sample_data
 Sample data to test quality control and aggregation modules
 - sample_hit_result.csv: sample hit result that is input to both the quality control and aggregation module
