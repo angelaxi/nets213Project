@@ -2,11 +2,19 @@
 Our project, WYM - Wear Your Mask, is a live application that utilizes camera recording to monitor the surrounding and determine if any individuals are maskless or not wearing their masks properly.
 # Directories
 ## data
-- images.txt: Contain links to dataset on s3 bucket
+- bounding_images: directory containing all input images for bounding box HITs
+- classification_images: directory containing all input images for classification HITs
+- bounding_hit_input(0-1).csv: generated CSV input for bounding box HITs
+- bounding_hit_output.csv: output from bounding box HITs
+- bounding_images.txt: links to bounding box input images on S3 bucket
+- classification_hit_input(0-1).csv: generated CSV input for classification HITs
+- classification_images.txt: links to classification input images on S3 bucket
+- gold_standard_Image_labels.csv: manually assigned labels to 50 images of each of our 3 categories
+- unlabeled_images.csv: list of image urls that have not been manually labeled
 ## docs
 - flowchart.png: flowchart with workflow and components
 - workflow.png: flowchart only listing workflow
-- screenshots.pdf: Screenshot of interfaces for HIT tasks and users
+- screenshots.pdf: Screenshot of interfaces for HITs and users
 ## src
 Contains code for the project as well as sample inputs and outputs to our code
 
@@ -71,33 +79,34 @@ List with the following columns:
 - ImageUrl: Image url
 - Label: Image label of either Wearing Mask Correctly, Wearing Mask Incorrectly, or Not Wearing Mask.
 # Code
-- result_process.py: contains quality control and aggregation functions to process results
+- <b>result_process.py</b>: contains quality control and aggregation functions to process results
     - Quality Control: 
-        - worker_quality(df): Computes worker quality from gold standard label answers
+        - <i>worker_quality(df)</i>: Computes worker quality from gold standard label answers
             - df: Dataframe from HIT result
             - output
                 - List of three tuples in the following order: WorkerId, Gold standard label accuracy, Whether the worker is a good worker or not
                 - Gold standard label confusion matrix
-        - em_worker_quality(rows, labels): Computes weighted worker quality
+        - <i>em_worker_quality(rows, labels)</i>: Computes weighted worker quality
             - rows: Dataframe from HIT result
             - labels: Dictionary storing label for each image in the form of an array of length 3 where the value of each index represents the weight of the label corresponding to that index
             - output: Confusion matrix for each worker
     - Aggregation:
-        - em_votes(rows, worker_qual): Computes labels given worker quality
+        - <i>em_votes(rows, worker_qual)</i>: Computes labels given worker quality
             - rows: Dataframe from HIT result
             - worker_quality: Dictionary storing confusion matrix for each worker
             - output: Dictionary storing label for each image in the form of an array of length 3 where the value of each index represents the weight of the label corresponding to that index
-        - em_iteration(rows, worker_qual): Completes one EM iteration
+        - <i>em_iteration(rows, worker_qual)</i>: Completes one EM iteration
             - rows: Dataframe from HIT result
             - worker_quality: Dictionary storing confusion matrix for each worker
             - output: 
                 - labels: Dictionary storing label for each image in the form of an array of length 3 where the value of each index represents the weight of the label corresponding to that index
                 - new_worker_quality: Dictionary storing new confusion matrix for each worker
-        - em_vote(rows, worker_qual, iter_num): Compute labels after iter_num iterations of the EM algorithm with initial worker quality specified by worker_qual
+        - <i>em_vote(rows, worker_qual, iter_num)</i>: Compute labels after iter_num iterations of the EM algorithm with initial worker quality specified by worker_qual
             - rows: Dataframe from HIT result
             - worker_quality: Dictionary storing initial confusion matrix for each worker
             - iter_num: Number of iterations to perform EM algorithm or until convergence if iter_num is less than 0
             - output: Sorted list of image urls and their respective string labels
+- <b>hit_process.py</b>: contains functions to preprocess inputs for HITs and postprocess HIT outputs
 ## sample_data
 Sample data to test quality control and aggregation modules
 - sample_hit_result.csv: sample hit result that is input to both the quality control and aggregation module
