@@ -1,5 +1,5 @@
 from os import listdir, mkdir
-from os.path import isfile, join
+from os.path import isfile, join, isdir
 from PIL import Image
 from json import loads
 import pandas as pd
@@ -29,16 +29,21 @@ def create_bounding_hit_inputs():
     
 # Crop bounding box images based on bounding box hit output and save cropped images
 def crop_images():
+    # Read bounding box hit output CSV
     data_dir = '../data'
     df = pd.read_csv(join(data_dir, 'bounding_hit_output.csv'))
     bound_dir = 'bounding_images'
     class_dir = 'classification_images'
-    mkdir(join(data_dir, class_dir))
+    # Create directory to store classification images
+    if not isdir(join(data_dir, class_dir)):
+        mkdir(join(data_dir, class_dir))
+    # Iterate over CSV
     for f, bbox in df[['Input.image_url', 'Answer.annotatedResult.boundingBoxes']].values:
         f = f.replace('https://wym-mask-images.s3.amazonaws.com/', '')
+        # Parse bounding box string
         l = loads(bbox)
+        # Crop image for each bounding box and save to classification directory
         for i, bbox in enumerate(l):
-            print("Image Url: %s Box: %s" % (f, i))
             xmin = bbox['left']
             ymin = bbox['top']
             xmax = bbox['width'] + xmin
