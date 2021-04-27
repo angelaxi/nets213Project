@@ -46,15 +46,19 @@ class VideoCamera(object):
         if self.new_pred:
             img_tensor = [self.transform(frame)]
             preds = self.model(img_tensor)
-            preds = preds[0]
-            self.preds = preds
+            self.preds = preds[0]
             self.new_pred = False
         # Show predictions on frame
         if self.preds:
-            for i, box in enumerate(self.preds["boxes"]):
-                if (self.preds["scores"][i].item() > 0.7):
+            threshold = 0.95
+            found = False
+            l = self.preds["scores"].shape[0]
+            i = 0
+            # Display predictions above threshold, decrementing threshold if no predictions are above
+            while i < l:
+                if self.preds["scores"][i].item() >= threshold:
                     # Get bounding box and label
-                    xmin, ymin, xmax, ymax = box
+                    xmin, ymin, xmax, ymax = self.preds["boxes"][i]
                     class_num = self.preds["labels"][i].item()
                     # Draw UI
                     label = inverse_label_map[class_num]
@@ -62,6 +66,13 @@ class VideoCamera(object):
                     cv2.putText(frame, label, (xmin, ymin - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
                     cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 2)
+                    i += 1
+                    found = True
+                else:
+                    if found:
+                        break
+                    else:
+                        threshold -= 0.05
         ret, jpeg = cv2.imencode('.jpg', frame)
         
         return jpeg.tobytes()
