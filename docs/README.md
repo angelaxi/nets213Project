@@ -17,7 +17,7 @@ Our project, WYM - Wear Your Mask, is a live application that utilizes camera re
 - gold_standard_image_labels.csv: manually assigned labels to 50 images of each of our 3 categories
 - unlabeled_images.csv: list of image urls that have not been manually labeled
 ## docs
-- MTurk: directory containing information on how to contribute to our HITs
+- Mturk: directory containing information on how to contribute to our HITs
 - flowchart.png: flowchart with workflow and components
 - workflow.png: flowchart only listing workflow
 - screenshots.pdf: Screenshot of interfaces for HITs and users

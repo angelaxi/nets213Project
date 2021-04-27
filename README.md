@@ -9,8 +9,6 @@ WYM - Wear Your Mask is a web application that utilizes a classifier to identify
     > python -m pip install -r requirements.txt
 - Install pytorch
     - https://pytorch.org/
-- Follow the guide to setup Tensorflow for GPU
-    - https://www.tensorflow.org/install/gpu
 - Document all files in Directory section of docs/README.md and if the file is code, explain in detail in Code section of docs/README.md
 
 # How To Contribute

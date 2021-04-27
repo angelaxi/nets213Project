@@ -208,7 +208,7 @@ def main():
     # Compute worker quality and confusion matrix from gold standard labels
     quality, cm = worker_quality(result_df)
     df = pd.DataFrame(quality, columns=['WorkerId', 'TasksCompleted', 'Accuracy', 'GoodWorker'])
-    #df.to_csv(join(data_dir, analysis_dir, 'gold_standard_quality.csv'), index=False)
+    df.to_csv(join(data_dir, analysis_dir, 'gold_standard_quality.csv'), index=False)
     
     # 1 iteration EM with gold standard label performance as initial quality
     unconverged_weighted_labels = em_vote(result_df, cm, 1)
