@@ -62,7 +62,7 @@ class VideoCamera(object):
                     cv2.putText(frame, label, (xmin, ymin - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
                     cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 2)
-            ret, jpeg = cv2.imencode('.jpg', frame)
+        ret, jpeg = cv2.imencode('.jpg', frame)
         
         return jpeg.tobytes()
 
