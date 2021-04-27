@@ -163,6 +163,7 @@ Code to run our Flask webapp
         - <i>get_frame(self)</i>: Returns the generated image frame in bytes with model predictions and generates new predictions if the new prediction button has been pressed
         - <i>set_prediction(self, pred)</i>: Set new_pred variable which determines if get_frame should make a new prediction
             - pred: Boolean that is true if a new prediction should be made
+- <b>faster_rcnn_model.pt</b>: Trained FasterRCNN model
 - templates: directory containing html files for our webapp
 ## Future Considerations
 We have implemented the full version of our quality control and aggregation modules. We utilize gold standard labels to get an initial quality control check for our EM algorithm to start on. We then let our algorithm converge to receive our labels. That being said, for our final labels that we use to train our classifier, we will cross reference multiple versions of our algorithm and see if they match. For any inconsistencies, we will manually verify the classification label. We expect that there will be few inconsistencies since it should fairly obviously whether a person is wearing their mask correctly or not. In other words, we expect little variance in the data. The versions of our algorithm that we will cross-reference are as follows:
