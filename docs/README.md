@@ -12,7 +12,8 @@ Our project, WYM - Wear Your Mask, is a live application that utilizes camera re
 - bounding_images.txt: links to bounding box input images on S3 bucket
 - classification_hit_input(0-1).csv: generated CSV input for classification HITs
 - classification_images.txt: links to classification input images on S3 bucket
-- gold_standard_Image_labels.csv: manually assigned labels to 50 images of each of our 3 categories
+- classifier_input.csv: CSV input to train classifier with columns as bounding box image file names, bounding boxes, and labels corresponding to each bounding box
+- gold_standard_image_labels.csv: manually assigned labels to 50 images of each of our 3 categories
 - unlabeled_images.csv: list of image urls that have not been manually labeled
 ## docs
 - flowchart.png: flowchart with workflow and components
@@ -110,6 +111,7 @@ List with the following columns:
             - worker_quality: Dictionary storing initial confusion matrix for each worker
             - iter_num: Number of iterations to perform EM algorithm or until convergence if iter_num is less than 0
             - output: Sorted list of image urls and their respective string labels
+        - <i>create_classification_model_input()</i>: Generates CSV input to train classifier with columns as bounding box image file names, bounding boxes, and labels corresponding to each bounding box
 - <b>hit_process.py</b>: contains functions to preprocess inputs for HITs and postprocess HIT outputs
     - <i>create_bounding_image_urls()</i>: Create text file with bounding box input image urls on S3 bucket
     - <i>create_bounding_hit_inputs()</i>: Create input CSVs for the bounding box HIT task

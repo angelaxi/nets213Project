@@ -3,6 +3,7 @@ import pandas as pd
 from collections import defaultdict
 from os import mkdir
 from os.path import join, isdir
+from json import loads, dumps
 
 label_map = {
     "Wearing Mask Correctly": 0,
@@ -157,6 +158,48 @@ def em_vote(rows, worker_qual, iter_num):
         for k, v in votes.items()
     ])
 
+# Create CSV file input to train classification_model
+def create_classification_model_input():
+    # Read gold standard labels and generated image labels
+    data_dir = '../data'
+    s3 = 'https://wym-mask-images.s3.amazonaws.com/'
+    labels = pd.read_csv(join(data_dir, 'gold_standard_image_labels.csv')).values.tolist() + \
+        pd.read_csv(join(data_dir, 'analysis', 'image_labels.csv')).values.tolist()
+    labels = sorted([(url.replace(join(s3, 'crop/'), ''), label)
+                    for (url, label) in labels])
+    s3 = 'https://wym-mask-images.s3.amazonaws.com/'
+
+    # Read bounding hit output to get bounding boxes
+    df = pd.read_csv(join(data_dir, 'bounding_hit_output.csv'))
+    df = df[['Input.image_url', 'Answer.annotatedResult.boundingBoxes']]
+    df['Input.image_url'] = df['Input.image_url'].apply(lambda x: x.replace(s3, ''))
+    df.columns = ['Image', 'BoundingBoxes']
+    df = df.sort_values(['Image'])
+    # Iterate over bounding boxes
+    index = 0
+    all_box_labels = []
+    for _, row in df.iterrows():
+        image = row['Image']
+        bboxes = loads(row['BoundingBoxes'])
+        box_labels = []
+        sorted_str = sorted([str(j) for j in range(len(bboxes))])
+        for i in sorted_str:
+            # Generate crop image file name
+            crop_image = "%s-%s.png" % (image[:len(image)-4], i)
+            # Check that generated crop image file name matches actual file name
+            if crop_image != labels[index][0]:
+                raise Exception("Expected %s but was %s" % (crop_image, labels[index][0]))
+            box_labels.append(labels[index][1])
+            index += 1
+        # Convert box_labels from string sorted order to integer sorted order
+        box_labels = [box_labels[i] for i in sorted(range(len(sorted_str)), key=lambda i: int(sorted_str[i]))]
+        # Append worker labels
+        all_box_labels.append(dumps(box_labels))
+    # Generate new csv with labels column
+    df['Labels'] = all_box_labels
+    df.to_csv(join(data_dir, 'classifier_input.csv'), index=False)
+  
+
 def main():
     data_dir = '../data/'
     analysis_dir = 'analysis'
@@ -168,7 +211,7 @@ def main():
     # Compute worker quality and confusion matrix from gold standard labels
     quality, cm = worker_quality(result_df)
     df = pd.DataFrame(quality, columns=['WorkerId', 'TasksCompleted', 'Accuracy', 'GoodWorker'])
-    df.to_csv(join(data_dir, analysis_dir, 'gold_standard_quality.csv'), index=False)
+    #df.to_csv(join(data_dir, analysis_dir, 'gold_standard_quality.csv'), index=False)
     
     # 1 iteration EM with gold standard label performance as initial quality
     unconverged_weighted_labels = em_vote(result_df, cm, 1)
@@ -182,7 +225,8 @@ def main():
     s3 = 'https://wym-mask-images.s3.amazonaws.com/crop/'
     labels = [(url.replace(s3, ''), label) for (url, label) in unconverged_weighted_labels]
     df = pd.DataFrame(labels, columns=['Image', 'Label'])
-    df.to_csv(join(data_dir, analysis_dir, 'image_labels.csv'), index=False)
+    #df.to_csv(join(data_dir, analysis_dir, 'image_labels.csv'), index=False)
+    create_classification_model_input()
     
     
     

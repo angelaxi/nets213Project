@@ -1,9 +1,9 @@
 # Introduction
 WYM - Wear Your Mask is a web application that utilizes a classifier to identify individuals not wearing a mask properly and crowdsourcing to gather data to train the classifier.
 # WYM Dev Setup
--   In the root directory, create an environment in env folder
+- In the root directory, create an environment in env folder
     > python -m venv env
--   Activate environment
+- Activate environment
     > env\Scripts\activate
 - Install all required packages
     > python -m pip install -r requirements.txt
