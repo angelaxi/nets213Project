@@ -11,6 +11,7 @@ WYM - Wear Your Mask is a web application that utilizes a classifier to identify
     - https://pytorch.org/
 - Follow the guide to setup Tensorflow for GPU
     - https://www.tensorflow.org/install/gpu
+- Document all files in Directory section of docs/README.md and if the file is code, explain in detail in Code section of docs/README.md
 
 # How To Contribute
 Thank you for contributing to our project! Below, you will find instructions as to how to access our mturk sandbox HITs, as well as detailed instructions as to how to contribute successfully.
@@ -39,3 +40,4 @@ Video Instruction: https://vimeo.com/541376394
 3. After you have labeled all 9 faces, please move on to the next task.
 # Documentation
 Refer to README.md in docs directory for documentation on the files in various directories
+Refer to README.md in src directory for information on how to run code

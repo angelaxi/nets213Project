@@ -11,11 +11,13 @@ Our project, WYM - Wear Your Mask, is a live application that utilizes camera re
 - bounding_hit_output.csv: output from bounding box HITs
 - bounding_images.txt: links to bounding box input images on S3 bucket
 - classification_hit_input(0-1).csv: generated CSV input for classification HITs
+- classification_hit_output: output from classification HITs
 - classification_images.txt: links to classification input images on S3 bucket
 - classifier_input.csv: CSV input to train classifier with columns as bounding box image file names, bounding boxes, and labels corresponding to each bounding box
 - gold_standard_image_labels.csv: manually assigned labels to 50 images of each of our 3 categories
 - unlabeled_images.csv: list of image urls that have not been manually labeled
 ## docs
+- MTurk: directory containing information on how to contribute to our HITs
 - flowchart.png: flowchart with workflow and components
 - workflow.png: flowchart only listing workflow
 - screenshots.pdf: Screenshot of interfaces for HITs and users
@@ -49,7 +51,7 @@ Refer to the Code section for more information about each file and any future im
 - Split the data into train/test/validation sets and run the classifier to compute accuracy
 - Fine tune parameters to increase accuracy
 - Test model on random pictures taken to evaluate if model is good enough in a realtime setting
-## Web Application (4)
+## Web Application (4, Completed)
 - Allow users to turn on camera for live recording
 - Feed camera recording into our classifier to determine if people in the recording are wearing masks properly
 - Display classifier results back to the user
@@ -84,6 +86,7 @@ List with the following columns:
 - Image: Image file name
 - Label: Image label of either Wearing Mask Correctly, Wearing Mask Incorrectly, or Not Wearing Mask.
 # Code
+Refer to README.md in src directory for information on how to run code
 - <b>result_process.py</b>: Contains quality control and aggregation functions to process results
     - Quality Control: 
         - <i>worker_quality(df)</i>: Computes worker quality from gold standard label answers
@@ -125,7 +128,7 @@ List with the following columns:
     - <i>def parse_labels(labels_string)</i>: Converts list of string labels  into list of list of tuples
         - labels_string: list of string labels
         - output: list of integers mapping to a unique label
-    - <i>MaskDataset Class</i>: Dataset object for our mask data
+    - MaskDataset Class: Dataset object for our mask data
         - Initialized with a transform object that is applied to every image
         - Each item is of the form (image, annotations) where image is an image tensor and annotations is a dictionary containing bounding boxes and label data
     - <i>collate_fn(batch)</i>: Converts batch data into tuples of lists
@@ -134,15 +137,33 @@ List with the following columns:
     - <i>get_model_instance_segmentation(num_classes)</i>: Obtains a pretrained FasterRCNN model with number of categories specificed by num_classes
         - num_classes: the number of classes images make up (by default, FasterRCNN uses 0 as a background model so if you have 3 classes, you must specific num_classes as 4)
         - output: pretrained FasterRCNN model
+## hit_templates
+HTML code for HIT templates
+- bounding_box_mockup.html: Template for face bounding box HIT task
+- classification_mockup.html: Template for face classification HIT task
+## models
+Contains models we have trained
+- models.txt: Contains links to models in our S3 bucket
 ## sample_data
 Sample data to test quality control and aggregation modules
 - sample_hit_result.csv: sample hit result that is input to both the quality control and aggregation module
 - sample_qc_out.csv: sample quality control output from gold standard labels
 - sample_agg_output.csv: sample EM aggregation output
-## hit_templates
-HTML code for HIT templates
-- bounding_box_mockup.html: Template for face bounding box HIT task
-- classification_mockup.html: Template for face classification HIT task
+## webapp
+Code to run our Flask webapp
+- <b>app.py</b>
+    - <i>index()</i>: Renders our home page and handles new prediction button click
+    - <i>gen(camera)</i>: Continuously generates frames from camera
+        - camera: VideoCamera object
+    - <i>video_feed()</i>: Renders video feed from camera
+- <b>camera.py</b>: 
+    - <i>get_model_instance_segmentation(num_classes)</i>: Refer to the corresponding function in train_classifier.py
+    - VideoCamera Class
+        - Stores our video source, model, image transformations on initialization
+        - <i>get_frame(self)</i>: Returns the generated image frame in bytes with model predictions and generates new predictions if the new prediction button has been pressed
+        - <i>set_prediction(self, pred)</i>: Set new_pred variable which determines if get_frame should make a new prediction
+            - pred: Boolean that is true if a new prediction should be made
+- templates: directory containing html files for our webapp
 ## Future Considerations
 We have implemented the full version of our quality control and aggregation modules. We utilize gold standard labels to get an initial quality control check for our EM algorithm to start on. We then let our algorithm converge to receive our labels. That being said, for our final labels that we use to train our classifier, we will cross reference multiple versions of our algorithm and see if they match. For any inconsistencies, we will manually verify the classification label. We expect that there will be few inconsistencies since it should fairly obviously whether a person is wearing their mask correctly or not. In other words, we expect little variance in the data. The versions of our algorithm that we will cross-reference are as follows:
 - Converged EM with gold standard label performance as initial quality
