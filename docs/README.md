@@ -43,9 +43,9 @@ Refer to the Code section for more information about each file and any future im
 ## Aggregate Labels (2, Completed)
 - Use EM in conjunction with gold standard labels performance as initial worker quality to generate true label for each image
 - Write code to generate true labels using Expectation Maximization algorithm along with gold standard labels
-## Train a Classifier (3)
+## Train a Classifier (3, Completed)
 - Using the labels determined by the workers, train a classifier to automatically determine whether or not a face in an image is Wearing Mask Correctly, Wearing Mask Incorrectly, or Not Wearing Mask.
-## Analyze Accuracy (3)
+## Analyze Accuracy (3, Completed)
 - Split the data into train/test/validation sets and run the classifier to compute accuracy
 - Fine tune parameters to increase accuracy
 - Test model on random pictures taken to evaluate if model is good enough in a realtime setting
@@ -84,7 +84,7 @@ List with the following columns:
 - Image: Image file name
 - Label: Image label of either Wearing Mask Correctly, Wearing Mask Incorrectly, or Not Wearing Mask.
 # Code
-- <b>result_process.py</b>: contains quality control and aggregation functions to process results
+- <b>result_process.py</b>: Contains quality control and aggregation functions to process results
     - Quality Control: 
         - <i>worker_quality(df)</i>: Computes worker quality from gold standard label answers
             - df: Dataframe from HIT result
@@ -112,13 +112,28 @@ List with the following columns:
             - iter_num: Number of iterations to perform EM algorithm or until convergence if iter_num is less than 0
             - output: Sorted list of image urls and their respective string labels
         - <i>create_classification_model_input()</i>: Generates CSV input to train classifier with columns as bounding box image file names, bounding boxes, and labels corresponding to each bounding box
-- <b>hit_process.py</b>: contains functions to preprocess inputs for HITs and postprocess HIT outputs
+- <b>hit_process.py</b>: Contains functions to preprocess inputs for HITs and postprocess HIT outputs
     - <i>create_bounding_image_urls()</i>: Create text file with bounding box input image urls on S3 bucket
     - <i>create_bounding_hit_inputs()</i>: Create input CSVs for the bounding box HIT task
     - <i>crop_images()</i>: Crop bounding box images based on bounding box HIT output and save cropped images
     - <i>create_classification_image_urls()</i>: Create text file with classification input image urls on S3 bucket
     - <i>create_classification_hit_inputs():</i>: Create CSV file inputs for classification HIT given gold standard labels
-
+- <b>train_classifier.py</b>: Trains classifier using Torchvision FastRCNNPredictor model on dataset obtained from aggregating user inputs
+    - <i>def parse_bounding_box(bboxes_string)</i>: Converts list of string json objects representing bounding boxes into list of length 4 lists 
+        - bboxes_string: list of string json objects
+        - output: list of length 4 lists of the form [xmin, ymin, xmax, ymax]
+    - <i>def parse_labels(labels_string)</i>: Converts list of string labels  into list of list of tuples
+        - labels_string: list of string labels
+        - output: list of integers mapping to a unique label
+    - <i>MaskDataset Class</i>: Dataset object for our mask data
+        - Initialized with a transform object that is applied to every image
+        - Each item is of the form (image, annotations) where image is an image tensor and annotations is a dictionary containing bounding boxes and label data
+    - <i>collate_fn(batch)</i>: Converts batch data into tuples of lists
+        - batch: list (length of list varies by batch size) of tuples of the form (image, annotations)
+        - output: tuple of the form (images, annotations)
+    - <i>get_model_instance_segmentation(num_classes)</i>: Obtains a pretrained FasterRCNN model with number of categories specificed by num_classes
+        - num_classes: the number of classes images make up (by default, FasterRCNN uses 0 as a background model so if you have 3 classes, you must specific num_classes as 4)
+        - output: pretrained FasterRCNN model
 ## sample_data
 Sample data to test quality control and aggregation modules
 - sample_hit_result.csv: sample hit result that is input to both the quality control and aggregation module

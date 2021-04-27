@@ -1,5 +1,6 @@
 from PIL import Image
-from os.path import join
+from os import mkdir
+from os.path import join, isdir
 from torchvision import transforms, datasets, models
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from json import loads
@@ -101,9 +102,11 @@ def main():
             epoch_loss += losses
             torch.cuda.empty_cache()
         print(epoch_loss)
-    
-    torch.save(model.state_dict(),'models/fasterrcnnmodel.pt')
-    torch.cuda.empty_cache()
+    # save model
+    models_dir = 'models'
+    if not isdir(models_dir):
+        mkdir(models_dir)
+    torch.save(model.state_dict(),join(models_dir, 'faster_rcnn_model.pt'))
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,1 @@
+https://wym-mask-images.s3.amazonaws.com/faster_rcnn_model.pt

@@ -163,10 +163,7 @@ def create_classification_model_input():
     # Read gold standard labels and generated image labels
     data_dir = '../data'
     s3 = 'https://wym-mask-images.s3.amazonaws.com/'
-    labels = pd.read_csv(join(data_dir, 'gold_standard_image_labels.csv')).values.tolist() + \
-        pd.read_csv(join(data_dir, 'analysis', 'image_labels.csv')).values.tolist()
-    labels = sorted([(url.replace(join(s3, 'crop/'), ''), label)
-                    for (url, label) in labels])
+    labels = pd.read_csv(join(data_dir, 'analysis', 'image_labels.csv')).values.tolist()
     s3 = 'https://wym-mask-images.s3.amazonaws.com/'
 
     # Read bounding hit output to get bounding boxes
@@ -222,10 +219,13 @@ def main():
     # Converged EM assuming all workers are initially perfect
     #converged_unweighted_labels = em_vote(result_df, None, -1)
 
+    # Append worker labels with gold standard labels
     s3 = 'https://wym-mask-images.s3.amazonaws.com/crop/'
-    labels = [(url.replace(s3, ''), label) for (url, label) in unconverged_weighted_labels]
+    labels = unconverged_weighted_labels + pd.read_csv(join(data_dir, 'gold_standard_image_labels.csv')).values.tolist()
+    labels = sorted([(url.replace(s3, ''), label) for (url, label) in labels])
     df = pd.DataFrame(labels, columns=['Image', 'Label'])
-    #df.to_csv(join(data_dir, analysis_dir, 'image_labels.csv'), index=False)
+    df.to_csv(join(data_dir, analysis_dir, 'image_labels.csv'), index=False)
+    
     create_classification_model_input()
     
     
