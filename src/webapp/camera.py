@@ -58,7 +58,7 @@ class VideoCamera(object):
             while i < l:
                 if self.preds["scores"][i].item() >= threshold:
                     # Get bounding box and label
-                    xmin, ymin, xmax, ymax = self.preds["boxes"][i]
+                    xmin, ymin, xmax, ymax = [int(x.item()) for x in self.preds["boxes"][i]]
                     class_num = self.preds["labels"][i].item()
                     # Draw UI
                     label = inverse_label_map[class_num]
