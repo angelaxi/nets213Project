@@ -38,4 +38,3 @@ Video Instruction: https://vimeo.com/541376394
 3. After you have labeled all 9 faces, please move on to the next task.
 # Documentation
 Refer to README.md in docs directory for documentation on the files in various directories
-Refer to README.md in src directory for information on how to run code
