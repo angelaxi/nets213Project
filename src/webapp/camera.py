@@ -44,9 +44,9 @@ class VideoCamera(object):
         ret, frame = self.video.read()
         # Make predictions on frame
         if self.new_pred:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             img_tensor = [self.transform(frame)]
-            preds = self.model(img_tensor)
-            self.preds = preds[0]
+            self.preds = self.model(img_tensor)[0]
             self.new_pred = False
         # Show predictions on frame
         if self.preds:
