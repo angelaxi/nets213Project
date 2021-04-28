@@ -28,7 +28,7 @@ class VideoCamera(object):
         # Store video and model
         self.video = cv2.VideoCapture(0)
         model = get_model_instance_segmentation(3)
-        model.load_state_dict(torch.load('faster_rcnn_model.pt'))
+        model.load_state_dict(torch.load('faster_rcnn_model.pt', map_location=torch.device('cpu')))
         self.model = model.eval()
         self.transform = data_transform = transforms.Compose([
                 transforms.ToTensor() 
@@ -47,6 +47,7 @@ class VideoCamera(object):
             img_tensor = [self.transform(frame)]
             preds = self.model(img_tensor)
             self.preds = preds[0]
+            print(self.preds)
             self.new_pred = False
         # Show predictions on frame
         if self.preds:
