@@ -47,7 +47,6 @@ class VideoCamera(object):
             img_tensor = [self.transform(frame)]
             preds = self.model(img_tensor)
             self.preds = preds[0]
-            print(self.preds)
             self.new_pred = False
         # Show predictions on frame
         if self.preds:
