@@ -3,6 +3,7 @@ from os.path import join
 from collections import defaultdict
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 label_map = {
     "Wearing Mask Correctly": 0,
@@ -59,6 +60,28 @@ def calculate_preliminary_model_accuracy(labels):
             quality[num][(num + 1) % len(label_map)] += 1
 
     return quality
+
+# Compute accuracy statistics for workers and model
+def compute_preliminary_statistics(worker_qual, model_qual):
+    # Aggregate worker results
+    total_worker_qual = sum(np.array([cm for cm in worker_qual.values()]))
+    # Compute worker accuracies
+    worker_total = sum([sum(l) for l in total_worker_qual])
+    worker_accs = [round(l[i] / sum(l), 3) for (i, l) in enumerate(total_worker_qual)]
+    worker_correct = total_worker_qual[0][0] + total_worker_qual[1][1] + total_worker_qual[2][2]
+    worker_acc = round(worker_correct / worker_total, 3)
+    # Compute model accuracies
+    model_total = sum([sum(l) for l in model_qual])
+    model_accs = [round(l[i] / sum(l), 3) for (i, l) in enumerate(model_qual)]
+    model_correct = model_qual[0][0] + model_qual[1][1] + model_qual[2][2]
+    model_acc = round(model_correct / model_total, 3)
+    # Write to CSV
+    df = pd.DataFrame([['Worker', worker_acc, worker_accs[0], worker_accs[1], worker_accs[2]],
+        ['Model', model_acc, model_accs[0], model_accs[1], model_accs[2]]],
+        columns=['Predictor', 'Total Accuracy', 'Wearing Mask Correctly Accuracy',
+            'Wearing Mask Incorrectly Accuracy', 'Not Wearing Mask Accuracy'])
+    df.to_csv(join(data_dir, analysis_dir, 'worker_model_accuracies.csv'), index=False)
+
 
 # Draw scatter plot of workers and model with random and majority baseline
 # Plot Image labeled vs Accuracy
@@ -118,6 +141,7 @@ def main():
     labels = {k: v for (k, v) in df[['Image', 'Label']].values.tolist()}
     worker_qual = calculate_worker_quality(labels)
     model_qual = calculate_preliminary_model_accuracy(labels)
+    compute_preliminary_statistics(worker_qual, model_qual)
     preliminary_scatter_plot(worker_qual, model_qual)
 
 if __name__ == '__main__':
