@@ -137,6 +137,15 @@ Refer to README.md in src directory for information on how to run code
     - <i>get_model_instance_segmentation(num_classes)</i>: Obtains a pretrained FasterRCNN model with number of categories specificed by num_classes
         - num_classes: the number of classes images make up (by default, FasterRCNN uses 0 as a background model so if you have 3 classes, you must specific num_classes as 4)
         - output: pretrained FasterRCNN model
+- <b>generate_model_predictions.py</b>: Computes model bounding box and label predictions on each bounding box image and maps bounding boxes to true bounding boxes
+    - <i>calculate_box_overlap(box0, box1)</i>: Calculate percentage overlap between two bounding boxes
+        - box0: First bounding box
+        - box1: Second bounding box
+    - <i>map_bounding_boxes(preds, bboxes, threshold)</i>: Map predicted bounding boxes to true bounding boxes if overlap percentage is above threshold
+        - preds: model predictions
+        - bboxes: true bounding boxes
+        - threshold: float representing percentage threshold
+    - Execute with --show-ui option to display image with bounding boxes along the way. Press q to quit and any other key to display the next image.
 ## hit_templates
 HTML code for HIT templates
 - bounding_box_mockup.html: Template for face bounding box HIT task
@@ -192,7 +201,7 @@ After finishing the dev environment setup, you can row the code in the src direc
    3. When the user clicks the New Prediction button, we will prompt our model to make a new prediction on the given frame
 # Future Analysis
 ## Compare model performance with worker
-We plan to test our model on gold standard labels and compare its pereformance to that of workers to determine if our model is a good worker. As explained earlier, we already have a csv output from our quality control module that analyzes worker performance. To determine our model performance, we will simply input each cropped image separately into our model, receive its inputs, and generate a confusion matrix much like we did with the workers. 
+We plan to test our model on gold standard labels and compare its performance to that of workers to determine if our model is a good worker. As explained earlier, we already have a csv output from our quality control module that analyzes worker performance. To determine our model performance, we will simply input each cropped image separately into our model, receive its inputs, and generate a confusion matrix much like we did with the workers. 
 ## Compare model performance against random and majority class baselines
 We will calculate expected performance of a random and majority class predictor on our dataset and compare that to our classifier. This will involve parsing our data/analysis/image_labels.csv file to determine the percentage makeup of each class and then computing the expected performance of the majority class and random predictory
 ## Compare aggregation model performance
@@ -203,3 +212,11 @@ We trained our model using EM with gold standard label performance as initial qu
 - EM with gold standard label performance as initial quality for 1 iteration
 
 First we will cross-reference the outputs and determine which files differ in labels between the 4 aggregation methods. We will then have experts(us) label the differing files to determine the true output. We expect that there will not too many differences to the point where we will not be able to label them ourselves. If that is the case, we will simply label a sample size to determine the most accurate aggregation model. We will then revise our model to using the most effective aggregation model.
+# Running Analysis Code
+1. > python generate_model_predictions.py
+    1. To show images with predicted and true bounding boxes run:
+    > python generate_model_predictions.py --show-ui
+    2. Reads data/classifier_input.csv to get true bounding boxes and labels for each image
+    3. Make predictions on each image using modeel/faster_rcnn_model.pt and remove duplicate bounding boxes
+    4. Map predicted bounding boxes to true bounding boxes
+    5. Display predicteed bounding boxes in color and true bounding boxes in black if code was run with --show-ui option

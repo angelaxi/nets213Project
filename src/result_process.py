@@ -164,7 +164,6 @@ def create_classification_model_input():
     data_dir = '../data'
     s3 = 'https://wym-mask-images.s3.amazonaws.com/'
     labels = pd.read_csv(join(data_dir, 'analysis', 'image_labels.csv')).values.tolist()
-    s3 = 'https://wym-mask-images.s3.amazonaws.com/'
 
     # Read bounding hit output to get bounding boxes
     df = pd.read_csv(join(data_dir, 'bounding_hit_output.csv'))
