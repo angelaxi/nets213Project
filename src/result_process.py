@@ -40,7 +40,7 @@ def worker_quality(df):
             # Compute total accuracy
             round((m[0][0] + m[1][1] + m[2][2]) / sum([sum(l) for l in m]), 3),
             # Check if worker is accurate for each classification label
-            all([l[i] / sum(l) > 0.9 for i, l in enumerate(m)])
+            all([l[i] / sum(l) >= 0.9 for i, l in enumerate(m)])
         ) for k, m in quality.items()]), { # Normalize Confusion Matrix
             k: [[0 if sum(m[0]) == 0 else m[0][0] / sum(m[0]), 
                  0 if sum(m[0]) == 0 else m[0][1] / sum(m[0]),
@@ -202,7 +202,7 @@ def main():
     # Create analysis directory
     if not isdir(join(data_dir, analysis_dir)):
         mkdir(join(data_dir, analysis_dir))
-    # Read in CVS result file with pandas
+    # Read in CSV result file with pandas
     result_df = pd.read_csv(join(data_dir, 'classification_hit_output.csv'))
     # Compute worker quality and confusion matrix from gold standard labels
     quality, cm = worker_quality(result_df)
@@ -211,12 +211,6 @@ def main():
     
     # 1 iteration EM with gold standard label performance as initial quality
     unconverged_weighted_labels = em_vote(result_df, cm, 1)
-    # Converged EM with gold standard label performance as initial quality
-    #converged_weighted_labels = em_vote(result_df, cm, -1)
-    # 1 iteration EM assuming all workers are initially perfect
-    #unconverged_unweighted_labels = em_vote(result_df, None, 1)
-    # Converged EM assuming all workers are initially perfect
-    #converged_unweighted_labels = em_vote(result_df, None, -1)
 
     # Append worker labels with gold standard labels
     s3 = 'https://wym-mask-images.s3.amazonaws.com/crop/'
