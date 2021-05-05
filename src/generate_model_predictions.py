@@ -118,7 +118,7 @@ def main():
                 # Store to list
                 model_labels.append((class_image, label))
                 if show_ui:
-                    # draw computed bounding boxes
+                    # Draw computed bounding boxes
                     xmin, ymin, xmax, ymax = [int(x) for x in preds["boxes"][pred_idx]]
                     color = color_map[class_num]
                     cv2.putText(frame, label, (xmin, ymin - 10),
@@ -134,7 +134,7 @@ def main():
         if show_ui:
             cv2.imshow('Frame', frame)
             key = cv2.waitKey(0)
-            if (key == ord('q')):
+            if key == ord('q'):
                 break
     if show_ui:
         cv2.destroyAllWindows()
