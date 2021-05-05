@@ -21,6 +21,7 @@ Our project, WYM - Wear Your Mask, is a live application that utilizes camera re
 - classification_images.txt: links to classification input images on S3 bucket
 - classifier_input.csv: CSV input to train classifier with columns as bounding box image file names, bounding boxes, and labels corresponding to each bounding box
 - gold_standard_image_labels.csv: manually assigned labels to 50 images of each of our 3 categories
+- true_labels.csv: manually assigned labels to 500 originally unlabeled images to test aggregation
 - unlabeled_images.csv: list of image urls that have not been manually labeled
 ## docs
 - Mturk: directory containing information on how to contribute to our HITs
@@ -182,6 +183,14 @@ Refer to README.md in src directory for information on how to run code
         - dy: pixel between each line
         - num_options: number of numerical options users can select from
     - Follow the prompts and enter q at any prompt to quit
+- <b>quality_control_analysis.py</b>: Analyzes worker performance on gold standard labels and generates insights based on tasks completed and time spent.
+    - Reads data/analysis/gold_standard_quality.csv to obtain worker gold standard performancee
+    - <i>def worker_task_accuracy_scatter_plot(df)</i>: Plots tasks completed vs accuracy of each worker
+        - df: dataframe containing worker gold standard performance data
+    - <i>def worker_accuracy_bar_graph(df)</i>: Computes a weighted average of all worker accuracies and displays it in a bar graph
+        - df: dataframe containing worker gold standard performance data
+    - <i>def worker_time_accuracy_scatter_plot(df)</i>: Plots average time spent on each task vs accuracy of each worker
+        - df: dataframe containing worker gold standard performance data
 ## hit_templates
 HTML code for HIT templates
 - bounding_box_mockup.html: Template for face bounding box HIT task
@@ -283,7 +292,11 @@ With this, we can determine how well the model can recognize faces, how often it
     3. If the bounding box is verifiable, we ask to user to label the face
     4. After all bounding boxes have been labeled, we ask the user how many additional faces they can label that does not have a bounding box
     5. Saves the user input to data/analysis/model_performance.csv
-4. 
+4. > python quality_control_analysis.py
+    1. Reads worker gold standard performance from data/analysis/gold_standard_quality.csv
+    2. Plots tasks completed vs accuracy
+    3. Plots bar graph of average worker accuracy for each category
+    4. Plots average time spent on each task vs accuracy
 4. > python model_analysis.py
     1. Reads true classification image labels from data/analysis/image_labels.csv
     2. Compute worker confusion matrices by comparing results in data/classification_hit_output.csv with true labels
