@@ -129,13 +129,13 @@ def em_iteration(rows, worker_qual):
     worker_qual = em_worker_quality(rows, votes)
     return votes, worker_qual
 
-def em_vote(rows, worker_qual, iter_num):
+def em_vote(rows, worker_qual, iter_num, return_dict=False):
     # Set worker quality to perfect if worker_qual is not a dictionary
     if not isinstance(worker_qual, dict):
         worker_qual = defaultdict(lambda: [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
     votes = dict()
     # Iterate for iter_num
-    if (iter_num >= 0):   
+    if iter_num >= 0:   
         for _ in range(iter_num):
             votes, worker_qual = em_iteration(rows, worker_qual)
     # Iterate until convergence
@@ -144,32 +144,18 @@ def em_vote(rows, worker_qual, iter_num):
         while prev_worker_qual != worker_qual:
             prev_worker_qual = worker_qual
             votes, worker_qual = em_iteration(rows, worker_qual)
-    return sorted([
-        # Get label corresponding to index of max weight
-        (k, inverse_label_map[max(range(len(v)), key=v.__getitem__)])
-        for k, v in votes.items()
-    ])
-
-def em_vote(rows, worker_qual, iter_num):
-    # Set worker quality to perfect if worker_qual is not a dictionary
-    if not isinstance(worker_qual, dict):
-        worker_qual = defaultdict(lambda: [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    votes = dict()
-    # Iterate for iter_num
-    if (iter_num >= 0):   
-        for _ in range(iter_num):
-            votes, worker_qual = em_iteration(rows, worker_qual)
-    # Iterate until convergence
+    if return_dict:
+        return {
+            # Get label corresponding to index of max weight
+            k: inverse_label_map[max(range(len(v)), key=v.__getitem__)]
+            for k, v in votes.items()
+        }, worker_qual
     else:
-        prev_worker_qual = None
-        while prev_worker_qual != worker_qual:
-            prev_worker_qual = worker_qual
-            votes, worker_qual = em_iteration(rows, worker_qual)
-    return sorted([
-        # Get label corresponding to index of max weight
-        (k, inverse_label_map[max(range(len(v)), key=v.__getitem__)])
-        for k, v in votes.items()
-    ])
+        return sorted([
+            # Get label corresponding to index of max weight
+            (k, inverse_label_map[max(range(len(v)), key=v.__getitem__)])
+            for k, v in votes.items()
+        ]), worker_qual
 
 # Create CSV file input to train classification_model
 def create_classification_model_input():
@@ -226,7 +212,7 @@ def main():
     df.to_csv(join(data_dir, analysis_dir, 'gold_standard_quality.csv'), index=False)
     
     # 1 iteration EM with gold standard label performance as initial quality
-    unconverged_weighted_labels = em_vote(result_df, cm, 1)
+    unconverged_weighted_labels, _ = em_vote(result_df, cm, 1)
 
     # Append worker labels with gold standard labels
     s3 = 'https://wym-mask-images.s3.amazonaws.com/crop/'

@@ -120,11 +120,14 @@ Refer to README.md in src directory for information on how to run code
             - output: 
                 - labels: Dictionary storing label for each image in the form of an array of length 3 where the value of each index represents the weight of the label corresponding to that index
                 - new_worker_quality: Dictionary storing new confusion matrix for each worker
-        - <i>em_vote(rows, worker_qual, iter_num)</i>: Compute labels after iter_num iterations of the EM algorithm with initial worker quality specified by worker_qual
+        - <i>em_vote(rows, worker_qual, iter_num, return_dict)</i>: Compute labels after iter_num iterations of the EM algorithm with initial worker quality specified by worker_qual
             - rows: Dataframe from HIT result
             - worker_quality: Dictionary storing initial confusion matrix for each worker
             - iter_num: Number of iterations to perform EM algorithm or until convergence if iter_num is less than 0
-            - output: Sorted list of image urls and their respective string labels
+            - return_dict: Returns dictionary if true and list if false
+            - output: 
+                - Sorted list of image urls and their respective string labels
+                - Confusion matrix for each worker
         - <i>create_classification_model_input()</i>: Generates CSV input to train classifier with columns as bounding box image file names, bounding boxes, and labels corresponding to each bounding box
 - <b>hit_process.py</b>: Contains functions to preprocess inputs for HITs and postprocess HIT outputs
     - <i>create_bounding_image_urls()</i>: Create text file with bounding box input image urls on S3 bucket
