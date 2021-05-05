@@ -45,7 +45,7 @@ def calculate_worker_quality(labels):
     return worker_qual
 
 # Calculate model accuracy on segmentation and classification
-# This is a preliminary analysis so we will condsider failure to detect face a false classification
+# This is a preliminary analysis so we will consider failure to detect face a false classification
 def calculate_preliminary_model_accuracy(labels):
     # Read model labels
     df = pd.read_csv(join(data_dir, analysis_dir, 'model_image_labels.csv'))
@@ -135,6 +135,22 @@ def preliminary_scatter_plot(worker_qual, model_qual):
     cbar.ax.set_ylabel('Minimum accuracy across all mask categories', rotation=270)
     plt.savefig(join(data_dir, analysis_dir, 'worker_model_quality.png'))
     plt.show()
+
+# Calculate model accuracy on segmentation and classification of validation images
+def calculate_model_accuracy():
+    # Read model performance output
+    df = pd.read_csv(join(data_dir, analysis_dir, 'model_performance.csv'))
+    quality = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+    for i, row in df.iterrows():
+        # Update confusion matrix
+        if image in model_labels:
+            quality[label_map[labels[image]]][label_map[model_labels[image]]] += 1
+        else:
+            num = label_map[labels[image]]
+            quality[num][(num + 1) % len(label_map)] += 1
+
+    return quality
+
 def main():
     # Read true labels into dictionary
     df = pd.read_csv(join(data_dir, analysis_dir, 'image_labels.csv'))

@@ -4,6 +4,8 @@ from collections import defaultdict
 from os import mkdir
 from os.path import join, isdir
 from json import loads, dumps
+from pytz import timezone
+from dateutil.parser import parse
 
 label_map = {
     "Wearing Mask Correctly": 0,
@@ -19,10 +21,17 @@ inverse_label_map = {
 
 # Quality Control
 def worker_quality(df):
+    tz = { 'PDT': timezone('US/Pacific')}
     quality = defaultdict(lambda: [[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+    time = defaultdict(lambda: [0, 0])
     keys = ['Answer.wmc_qc', 'Answer.wmi_qc', 'Answer.nwm_qc']
     for _, row in df.iterrows():
         worker = row['WorkerId']
+        # Compute time spend on task
+        accept_time = parse(row['AcceptTime'], tzinfos=tz)
+        submit_time = parse(row['SubmitTime'], tzinfos=tz)
+        time[worker][0] += (submit_time - accept_time).seconds
+        time[worker][1] += 1
         # Iterate over quality control values
         for i, key in enumerate(keys):
             label = row[key]
@@ -36,9 +45,13 @@ def worker_quality(df):
     return sorted([
         (
             k, 
-            sum([sum(l) for l in m]),
-            # Compute total accuracy
-            round((m[0][0] + m[1][1] + m[2][2]) / sum([sum(l) for l in m]), 3),
+            time[k][1],
+            time[k][0] / time[k][1],
+            # Compute accuracies
+            m[0][0] / sum(m[0]),
+            m[1][1] / sum(m[1]),
+            m[2][2] / sum(m[2]),
+            (m[0][0] + m[1][1] + m[2][2]) / sum([sum(l) for l in m]),
             # Check if worker is accurate for each classification label
             all([l[i] / sum(l) >= 0.9 for i, l in enumerate(m)])
         ) for k, m in quality.items()]), { # Normalize Confusion Matrix
@@ -206,7 +219,10 @@ def main():
     result_df = pd.read_csv(join(data_dir, 'classification_hit_output.csv'))
     # Compute worker quality and confusion matrix from gold standard labels
     quality, cm = worker_quality(result_df)
-    df = pd.DataFrame(quality, columns=['WorkerId', 'TasksCompleted', 'Accuracy', 'GoodWorker'])
+    df = pd.DataFrame(quality, columns=[
+        'WorkerId', 'TasksCompleted', 'TimePerTask', 'WearingMaskCorrectlyAccuracy',
+        'WearingMaskIncorrectlyAccuracy', 'NotWearingMaskAccuracy', 'TotalAccuracy', 'GoodWorker'
+    ])
     df.to_csv(join(data_dir, analysis_dir, 'gold_standard_quality.csv'), index=False)
     
     # 1 iteration EM with gold standard label performance as initial quality
