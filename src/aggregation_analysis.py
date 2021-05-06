@@ -4,6 +4,8 @@ from matplotlib.colors import LinearSegmentedColormap
 from result_process import em_vote, worker_quality
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
 
 data_dir = '../data/'
 analysis_dir = 'analysis'
@@ -83,13 +85,11 @@ def worker_accuracy_iteration_plot(result_df, true_df, worker_qual):
         worker_qual = defaultdict(lambda: [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
     prev_worker_qual = None
     xs = []
-    ys = []
-    cs = []
     i = 0
     s3 = 'https://wym-mask-images.s3.amazonaws.com/crop/'
     # Get workers that contributed to images with true labels
     workers = {
-        row['WorkerId'] for (i, row) in result_df.iterrows() 
+        row['WorkerId']: ([], []) for (i, row) in result_df.iterrows() 
         if row['Input.image1':'Input.image6'].apply(
             lambda x: x.replace(s3, '')).isin(true_df.index).any()
     }
@@ -99,28 +99,39 @@ def worker_accuracy_iteration_plot(result_df, true_df, worker_qual):
         # Get confusion matrix after one iteration
         _, cm = em_vote(result_df, worker_qual, 1, return_dict=True)
         # Append data
+        xs.append(i)
         for worker in workers:
-            m = cm[worker]
-            xs.append(i)
+            m = worker_qual[worker]
             # Compute total accuracy
             acc = (m[0][0] + m[1][1] + m[2][2]) / sum([sum(l) for l in m])
-            ys.append(acc)
+            workers[worker][0].append(acc)
             # Find least accurate category
-            min_acc = min([l[i] / sum(l) if sum(l) > 0 else 0 for i, l in enumerate(m)])
-            cs.append(min_acc)
+            accs = [l[i] / sum(l) for i, l in enumerate(m) if sum(l) > 0]
+            min_acc = min(accs)
+            workers[worker][1].append(min_acc)
         i += 1
         # Update previous and current confusion matrices
         prev_worker_qual = worker_qual
         worker_qual = cm
-     # Plot graph
+    # Plot graph
     cmap = LinearSegmentedColormap.from_list("", ["red","yellow","green"])
-    plt.scatter(xs, ys, c=cs, cmap=cmap, vmin=0, vmax=1)
+    # Sample workers to plot in a uniform fashion
+    if init:
+        workers = sorted([(ys, cs) for (ys, cs) in workers.values()], key = lambda x: x[1][0])
+    else:
+        workers = sorted([(ys, cs) for (ys, cs) in workers.values()], key = lambda x: x[1][1])
+    for ys, cs in workers[::2]:
+        if init:
+            plt.plot(xs, ys, color=cmap(cs[0]))
+        else:
+            plt.plot(xs, ys, color=cmap(cs[1]))
     plt.xlabel("Iteration Number")
     plt.ylabel("Percentage Accuracy")
     plt.xticks(range(i))
-    cbar = plt.colorbar()
-    cbar.ax.get_yaxis().labelpad = 15
-    cbar.ax.set_ylabel('Minimum accuracy across all mask categories', rotation=270)
+    cmappable = ScalarMappable(norm=Normalize(0,1), cmap=cmap)
+    cbar = plt.colorbar(cmappable)
+    #cbar.ax.get_yaxis().labelpad = 15
+    #cbar.ax.set_ylabel('Minimum accuracy across all mask categories', rotation=270)
     if init:
         plt.title("Number of iterations vs worker accuracy with initial worker quality")
         plt.savefig(join(data_dir, analysis_dir, 'worker_accuracy_iteration_with_initial.png'))
@@ -139,8 +150,8 @@ def main():
     # Compute worker quality and confusion matrix from gold standard labels
     _, cm = worker_quality(result_df)
     # 1 iteration EM with gold standard label performance as initial quality
-    accuracy_iteration_plot(result_df, df, cm)
-    accuracy_iteration_plot(result_df, df, None)
+    #accuracy_iteration_plot(result_df, df, cm)
+    #accuracy_iteration_plot(result_df, df, None)
     worker_accuracy_iteration_plot(result_df, df, cm)
     worker_accuracy_iteration_plot(result_df, df, None)
 
