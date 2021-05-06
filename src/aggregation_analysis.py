@@ -26,9 +26,9 @@ def compute_accuracies(df, labels):
         pred_label = label_map[labels[join(s3, image)]]
         cm[true_label][pred_label] += 1
     return (
-        cm[0][0] / sum(cm[0]),
-        cm[1][1] / sum(cm[1]),
-        cm[2][2] / sum(cm[2]),
+        0 if sum(cm[0]) == 0 else cm[0][0] / sum(cm[0]) ,
+        0 if sum(cm[1]) == 0 else cm[1][1] / sum(cm[1]),
+        0 if sum(cm[2]) == 0 else cm[2][2] / sum(cm[2]),
         (cm[0][0] + cm[1][1] + cm[2][2]) / sum([sum(l) for l in cm])
     )
 
@@ -61,10 +61,10 @@ def accuracy_iteration_plot(result_df, true_df, worker_qual):
         nwms.append(nwm_acc)
         totals.append(total_acc)
         i += 1
-    plt.plot(xs, wmcs, color='green', label='WMC Accuracy')
-    plt.plot(xs, wmis, color='yellow', label='WMI Accuracy')
-    plt.plot(xs, nwms, color='red', label='NWM Accuracy')
-    plt.plot(xs, totals, color='black', label='Total Accuracy')
+    plt.plot(xs, wmcs, color='green', label='WMC')
+    plt.plot(xs, wmis, color='yellow', label='WMI')
+    plt.plot(xs, nwms, color='red', label='NWM')
+    plt.plot(xs, totals, color='black', label='Total')
     plt.xticks(range(1, i))
     plt.legend()
     plt.xlabel("Iteration number")
@@ -130,8 +130,8 @@ def worker_accuracy_iteration_plot(result_df, true_df, worker_qual):
     plt.xticks(range(i))
     cmappable = ScalarMappable(norm=Normalize(0,1), cmap=cmap)
     cbar = plt.colorbar(cmappable)
-    #cbar.ax.get_yaxis().labelpad = 15
-    #cbar.ax.set_ylabel('Minimum accuracy across all mask categories', rotation=270)
+    cbar.ax.get_yaxis().labelpad = 15
+    cbar.ax.set_ylabel('Minimum accuracy across all mask categories', rotation=270)
     if init:
         plt.title("Number of iterations vs worker accuracy with initial worker quality")
         plt.savefig(join(data_dir, analysis_dir, 'worker_accuracy_iteration_with_initial.png'))

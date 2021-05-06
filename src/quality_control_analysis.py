@@ -42,7 +42,7 @@ def worker_task_accuracy_scatter_plot(df):
 
 # Bar graph of average worker performance on all categories
 def worker_accuracy_bar_graph(df):
-    xs = ['WMC Accuracy', 'WMI Accuracy', 'NWM Accuracy', 'Total Accuracy']
+    xs = ['WMC', 'WMI', 'NWM', 'Total']
     keys = [
         'WearingMaskCorrectlyAccuracy', 'WearingMaskIncorrectlyAccuracy', 
         'NotWearingMaskAccuracy', 'TotalAccuracy'
@@ -58,8 +58,8 @@ def worker_accuracy_bar_graph(df):
     # Plot bar graph
     ys = [total[i+1] / total[0] for i,_ in enumerate(keys)]
     plt.bar(xs, ys, color=['green', 'yellow', 'red', 'black'])
-    plt.title('Average worker accuracy across all categories')
-    plt.xlabel('Categories')
+    plt.title('Average worker accuracy across all mask categories')
+    plt.xlabel('Mask Categories')
     plt.ylabel('Percentage Accuracy')
     plt.ylim((0, 1))
     plt.savefig(join(data_dir, analysis_dir, 'worker_gold_standard_accuracies.png'))

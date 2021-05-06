@@ -48,22 +48,14 @@ def worker_quality(df):
             time[k][1],
             time[k][0] / time[k][1],
             # Compute accuracies
-            m[0][0] / sum(m[0]),
-            m[1][1] / sum(m[1]),
-            m[2][2] / sum(m[2]),
+            0 if sum(m[0]) == 0 else m[0][0] / sum(m[0]),
+            0 if sum(m[1]) == 0 else m[1][1] / sum(m[1]),
+            0 if sum(m[2]) == 0 else m[2][2] / sum(m[2]),
             (m[0][0] + m[1][1] + m[2][2]) / sum([sum(l) for l in m]),
             # Check if worker is accurate for each classification label
-            all([l[i] / sum(l) >= 0.9 for i, l in enumerate(m)])
+            all([(0 if sum(l) == 0 else l[i] / sum(l)) >= 0.9 for i, l in enumerate(m)])
         ) for k, m in quality.items()]), { # Normalize Confusion Matrix
-            k: [[0 if sum(m[0]) == 0 else m[0][0] / sum(m[0]), 
-                 0 if sum(m[0]) == 0 else m[0][1] / sum(m[0]),
-                 0 if sum(m[0]) == 0 else m[0][2] / sum(m[0])],
-                [0 if sum(m[1]) == 0 else m[1][0] / sum(m[1]), 
-                 0 if sum(m[1]) == 0 else m[1][1] / sum(m[1]),
-                 0 if sum(m[1]) == 0 else m[1][2] / sum(m[1])],
-                [0 if sum(m[2]) == 0 else m[2][0] / sum(m[2]), 
-                 0 if sum(m[2]) == 0 else m[2][1] / sum(m[2]),
-                 0 if sum(m[2]) == 0 else m[2][2] / sum(m[2])]]
+            k: [[0 if sum(l) == 0 else x / sum(l) for x in l] for l in m]
             for k, m in quality.items()}
 
 def em_worker_quality(rows, labels):
@@ -89,15 +81,7 @@ def em_worker_quality(rows, labels):
             quality[worker][truelabel][label] += 1
             
     # Return normalized confusion matrix
-    return { k: [[0 if sum(m[0]) == 0 else m[0][0] / sum(m[0]), 
-                  0 if sum(m[0]) == 0 else m[0][1] / sum(m[0]),
-                  0 if sum(m[0]) == 0 else m[0][2] / sum(m[0])],
-                 [0 if sum(m[1]) == 0 else m[1][0] / sum(m[1]), 
-                  0 if sum(m[1]) == 0 else m[1][1] / sum(m[1]),
-                  0 if sum(m[1]) == 0 else m[1][2] / sum(m[1])],
-                 [0 if sum(m[2]) == 0 else m[2][0] / sum(m[2]), 
-                  0 if sum(m[2]) == 0 else m[2][1] / sum(m[2]),
-                  0 if sum(m[2]) == 0 else m[2][2] / sum(m[2])]]
+    return { k: [[0 if sum(l) == 0 else x / sum(l) for x in l] for l in m]
             for k, m in quality.items()}
 
 # Aggregation

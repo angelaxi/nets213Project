@@ -15,7 +15,7 @@ Our project, WYM - Wear Your Mask, is a live application that utilizes camera re
     - model_performance.csv: model performance on validation images containing bounding boxes, predicted labels, scores for prediction, true labels, and number of undetected faces identified by user
     - worker_accuracy_iteration_with_initial.png: plot of iteration number vs individual worker accuracy with gold standard quality as initial quality
     - worker_accuracy_iteration_without_initial.png: plot of iteration number vs individual worker accuracy assuming all workers are initially perfect
-    - worker_model_accuracies.csv: accuracies of all workers combined and our model on labeling classification images
+    - worker_model_accuracies.png: bar graph representing accuracies of all workers combined and our model on labeling classification images and validation images
     - worker_model_quality.png: graph of classification images labeled vs accuracy of workers and our FasterRCNN model
 - bounding_hit_input(0-1).csv: generated CSV input for bounding box HITs
 - bounding_hit_output.csv: output from bounding box HITs

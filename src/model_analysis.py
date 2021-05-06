@@ -73,7 +73,7 @@ def calculate_model_accuracy():
     # Stores average score for each bounding box category
     avg_scores = [[0, 0] for _ in range(6)]
     # Stores percentage of faces detected in an image
-    detected_faces = [0, 0]
+    detected_faces = [0, 0, 0, 0, 0]
     # Iterate over predictions for each validation image
     for _, row in df.iterrows():
         # Read columns
@@ -81,7 +81,7 @@ def calculate_model_accuracy():
         labels = loads(row['PredictedLabels'])
         true_labels = loads(row['Labels'])
         num_undetected = row['UndetectedFaces']
-        detected_faces[1] += num_undetected
+        detected_faces[4] += num_undetected
         # Iterate over bounding box labels
         for i, label in enumerate(labels):
             label = label_map[label]
@@ -90,13 +90,14 @@ def calculate_model_accuracy():
             quality[true_label][label] += 1
             # Update scores
             avg_scores[true_label][0] += scores[i]
-            avg_scores[true_label][1] += scores[i]
+            avg_scores[true_label][1] += 1
             # Update detection rate
             if true_label < 3:
                 detected_faces[0] += 1
-                detected_faces[1] += 1
+            else:
+                detected_faces[true_label - 2] += 1
 
-    return quality, [total / num for total, num in avg_scores], detected_faces[0] / detected_faces[1]
+    return quality, [total / num for total, num in avg_scores], detected_faces
 
 # Compute accuracy statistics for workers and model
 def accuracy_bar_graph(worker_qual, model_qual, val_model_qual):
@@ -113,27 +114,74 @@ def accuracy_bar_graph(worker_qual, model_qual, val_model_qual):
     model_correct = model_qual[0][0] + model_qual[1][1] + model_qual[2][2]
     model_accs.append(model_correct / model_total)
     # Compute validation model accuracies
-    val_model_total = sum([sum(l) for l in val_model_qual[:3]])
-    val_model_accs = [l[i] / sum(l) for (i, l) in enumerate(val_model_qual[:3])]
+    val_model_total = sum([sum(l) for l in val_model_qual])
+    val_model_accs = [l[i] / sum(l) for (i, l) in enumerate(val_model_qual)]
     val_model_correct = val_model_qual[0][0] + val_model_qual[1][1] + val_model_qual[2][2]
     val_model_accs.append(val_model_correct / val_model_total)
 
     # Plot graph
-    labels = ['WMC Accuracy', 'WMI Accuracy', 'NWM Accuracy', 'Total Accuracy']
-    x = np.arange(len(labels))
+    plt.figure(figsize=(10, 6))
+    labels = ['WMC', 'WMI', 'NWM', 'Total']
+    x = np.arange(len(labels)) * 2
     width = 0.4
-
-    plt.bar(x-width/2, worker_accs, width, label='Worker')
-    plt.bar(x, model_accs, width, label='Model Training')
-    plt.bar(x+width/2, val_model_accs, width,  label='Model Validation')
-    plt.legend()
+    plt.bar(x - width, worker_accs, width=width, label='Worker')
+    plt.bar(x, model_accs, width=width, label='Model Training')
+    plt.bar(x + width, val_model_accs, width=width, label='Model Validation')
+    plt.legend(bbox_to_anchor=(1.27, 0.5), loc='center right')
     plt.xticks(x, labels)
-    plt.title("Images labeled vs Accuracy of Workers and FasterRCNN model")
-    plt.xlabel("Categories")
+    plt.title("Accuracy of Workers and FasterRCNN model")
+    plt.xlabel("Mask Categories")
     plt.ylabel("Percentage Accuracy")
+    plt.subplots_adjust(right=0.8)
     plt.savefig(join(data_dir, analysis_dir, 'worker_model_accuracies.png'))
     plt.show()
 
+# Plot probability of each label given the bounding box label in a bar graph
+def probability_bar_graph(cm):
+    cm = [[x / sum(l) for x in l] for l in cm]
+    labels = ['WMC', 'WMI', 'NWM', 'Duplicate', 'Unverifiable', 'Incorrect']
+    x = np.arange(len(labels)) * 5
+    width = 2
+    plt.bar(x, scores, width=width, color=['green', 'yellow', 'red', 'blue', 'orange', 'purple'])
+    plt.title('Probability distribution of mask categories given bounding box categories')
+    plt.xticks(x, labels)
+    plt.xlabel('Bounding Box Categories')
+    plt.ylabel('Percentage Confidence')
+    plt.ylim((0, 1))
+    plt.savefig(join(data_dir, analysis_dir, 'model_scores.png'))
+    plt.show()
+
+# Plot average scores for each bounding box category
+def scores_bar_graph(scores):
+    labels = ['WMC', 'WMI', 'NWM', 'Duplicate', 'Unverifiable', 'Incorrect']
+    x = np.arange(len(labels)) * 5
+    width = 2
+    plt.bar(x, scores, width=width, color=['green', 'yellow', 'red', 'blue', 'orange', 'purple'])
+    plt.title('Average model confidence score for each bounding box category')
+    plt.xticks(x, labels)
+    plt.xlabel('Bounding Box Categories')
+    plt.ylabel('Percentage Confidence')
+    plt.ylim((0, 1))
+    plt.savefig(join(data_dir, analysis_dir, 'model_scores.png'))
+    plt.show()
+
+def detection_rate_pie_chart(detect_rate):
+    labels = ['Detected', 'Undetected']
+    sizes = detect_rate[::4]
+    explode = (0, 0.1)
+    plt.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%',
+        shadow=True, startangle=0, colors=['green', 'red'])
+    plt.title('Percentage of faces detected by model')
+    plt.savefig(join(data_dir, analysis_dir, 'face_detect.png'))
+    plt.show()
+    labels = ['Verifiable', 'Duplicate', 'Unverifiable', 'Incorrect']
+    sizes = detect_rate[:4]
+    explode = (0.1, 0.05, 0.05, 0.05)
+    plt.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%',
+        shadow=True, startangle=10, colors=['green', 'blue', 'orange', 'purple'])
+    plt.title('Percentage makeup of model bounding boxes')
+    plt.savefig(join(data_dir, analysis_dir, 'bounding_boxe_categories.png'))
+    plt.show()
 
 # Draw scatter plot of workers and model with random and majority baseline
 # Plot Image labeled vs Accuracy
@@ -196,8 +244,11 @@ def main():
     worker_qual = calculate_worker_quality(labels)
     model_qual = calculate_preliminary_model_accuracy(labels)
     val_model_qual, scores, detect_rate = calculate_model_accuracy()
-    accuracy_bar_graph(worker_qual, model_qual, val_model_qual)
-    # preliminary_scatter_plot(worker_qual, model_qual)
+    accuracy_bar_graph(worker_qual, model_qual, val_model_qual[:3])
+    probability_bar_graph(val_model_qual)
+    scores_bar_graph(scores)
+    detection_rate_pie_chart(detect_rate)
+    scatter_plot(worker_qual, model_qual, val_model_qual)
 
 if __name__ == '__main__':
     main()
