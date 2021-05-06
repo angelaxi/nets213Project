@@ -202,7 +202,7 @@ def main():
             if answer == 'q':
                 break
             labels = [bounding_box_label_map[i] for i in labels]
-            df.loc[image] = [bboxes, labels, scores, true_labels, answer]
+            df.loc[image] = [bboxes, dumps(labels), scores, dumps(true_labels), answer]
     df.to_csv(f, index=True)        
 
     

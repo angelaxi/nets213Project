@@ -80,7 +80,7 @@ def calculate_model_accuracy():
         scores = loads(row['PredictedScores'])
         labels = loads(row['PredictedLabels'])
         true_labels = loads(row['Labels'])
-        num_undetected = loads(row['UndetectedFaces'])
+        num_undetected = row['UndetectedFaces']
         detected_faces[1] += num_undetected
         # Iterate over bounding box labels
         for i, label in enumerate(labels):
