@@ -88,18 +88,18 @@ def worker_accuracy_iteration_plot(result_df, true_df, worker_qual):
     i = 0
     s3 = 'https://wym-mask-images.s3.amazonaws.com/crop/'
     # Get workers that contributed to images with true labels
-    workers = result_df.apply(
-        lambda x: pd.Series([
-            x['WorkerId'], len([i for i in x['Input.image1':'Input.image6'].apply(
-                lambda x: x.replace(s3, '')).isin(true_df.index) if i is True])
-        ]), axis=1)
-    workers = workers.loc[workers[1] > 0].groupby([0]).sum().sort_values([1], ascending=False)
+    workers = {
+        row['WorkerId'] for (i, row) in result_df.iterrows() 
+        if row['Input.image1':'Input.image6'].apply(
+            lambda x: x.replace(s3, '')).isin(true_df.index).any()
+    }
+
     # Iterate until convergence
     while prev_worker_qual != worker_qual:
         # Get confusion matrix after one iteration
         _, cm = em_vote(result_df, worker_qual, 1, return_dict=True)
         # Append data
-        for worker in workers.index:
+        for worker in workers:
             m = cm[worker]
             xs.append(i)
             # Compute total accuracy
@@ -139,8 +139,8 @@ def main():
     # Compute worker quality and confusion matrix from gold standard labels
     _, cm = worker_quality(result_df)
     # 1 iteration EM with gold standard label performance as initial quality
-    #accuracy_iteration_plot(result_df, df, cm)
-    #accuracy_iteration_plot(result_df, df, None)
+    accuracy_iteration_plot(result_df, df, cm)
+    accuracy_iteration_plot(result_df, df, None)
     worker_accuracy_iteration_plot(result_df, df, cm)
     worker_accuracy_iteration_plot(result_df, df, None)
 
