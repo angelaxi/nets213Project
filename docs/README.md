@@ -6,11 +6,15 @@ Our project, WYM - Wear Your Mask, is a live application that utilizes camera re
 - classification_images: directory containing all input images for classification HITs
 - validation_images: directory containing validation images of crowds to test our model on
 - analysis: directory containing analysis files after performance quality control and aggregation
+    - accuracy_iteration_with_initial.png: plot of iteration number vs accuracy with gold standard quality as initial quality
+    - accuracy_iteration_without_initial.png: plot of iteration number vs accuracy assuming all workers are initially perfect
     - gold_standard_quality.csv: quality control output for every worker with tasks completed, average time spent on each task, accuracy for each face category, total accuracy, and whether or not the worker is a good worker
     - image_labels.csv: aggregation output from running EM with gold standard performance as initial quality for 1 iteration
     - model_image_labels.csv: model predictions on labels for classification images
     - model_image_preds.csv: model predictions on validation images including a list of bounding boxes, a list of labels corresponding to each bounding box, and a list a scores that the model assigns to each bounding box prediction
     - model_performance.csv: model performance on validation images containing bounding boxes, predicted labels, scores for prediction, true labels, and number of undetected faces identified by user
+    - worker_accuracy_iteration_with_initial.png: plot of iteration number vs individual worker accuracy with gold standard quality as initial quality
+    - worker_accuracy_iteration_without_initial.png: plot of iteration number vs individual worker accuracy assuming all workers are initially perfect
     - worker_model_accuracies.csv: accuracies of all workers combined and our model on labeling classification images
     - worker_model_quality.png: graph of classification images labeled vs accuracy of workers and our FasterRCNN model
 - bounding_hit_input(0-1).csv: generated CSV input for bounding box HITs
@@ -169,9 +173,15 @@ Refer to README.md in src directory for information on how to run code
     - <i>calculate_preliminary_model_accuracy(labels)</i>: Calculate model confusion matrix from data/analysis.model_image_labels.csv
         - labels: dictionary mapping image file name to label
         - output: confusion matrices for model
-    - <i>compute_preliminary_statistics(worker_qual, model_qual)</i>: Compute accuracy statistics for workers and model:
+    - <i>calculate_model_accuracy()</i>: Calculate model confusion matrices, average scores, and percentage face detection
+        - output:
+            - 6 x 3 confusion matrix for 6 bounding box categories and 3 face categories
+            - List of 6 average scores corresponding to each bounding box category
+            - Percentage of faces detected on average
+    - <i>accuracy_bar_graph(worker_qual, model_qual, val_model_qual)</i>: Compute accuracy statistics for workers and model:
         - worker_qual: confusion matrices for each worker
         - model_qual: model confusion matrix
+        - val_model_qual: validation model confusion matrix
     - <i>preliminary_scatter_plot(worker_qual, model_qual)</i>: Plot worker and model quality along with baselines
         - worker_qual: confusion matrices for each worker
         - model_qual: model confusion matrix
@@ -194,6 +204,19 @@ Refer to README.md in src directory for information on how to run code
         - df: dataframe containing worker gold standard performance data
     - <i>def worker_time_accuracy_scatter_plot(df)</i>: Plots average time spent on each task vs accuracy of each worker
         - df: dataframe containing worker gold standard performance data
+- <b>aggregation_analysis</b>: Computes accuracy on a sample of 500 classification images with true labels for different versions of the EM algorithm
+    - <i>compute_accuracies(df, labels)</i>: Computers accuracy given true labels and predicted labels
+        - df: dataframe containing true labels
+        - labels: dictionary containing predicted labels from workers
+    - <i>accuracy_iteration_plot(result_df, true_df, worker_qual)</i> Plots iteration number vs accuracy
+        - result_df: dataframe containing results from classification HITs
+        - true_df: dataframe containing true labels
+        - worker_qual: initial worker quality to use for EM algorithm
+    - <i>worker_accuracy_iteration_plot(result_df, true_df, worker_qual)</i> Plots iteration number vs individual worker accuracy
+        - result_df: dataframe containing results from classification HITs
+        - true_df: dataframe containing true labels
+        - worker_qual: initial worker quality to use for EM algorithm
+
 ## hit_templates
 HTML code for HIT templates
 - bounding_box_mockup.html: Template for face bounding box HIT task
@@ -300,7 +323,13 @@ With this, we can determine how well the model can recognize faces, how often it
     2. Plots tasks completed vs accuracy
     3. Plots bar graph of average worker accuracy for each category
     4. Plots average time spent on each task vs accuracy
-4. > python model_analysis.py
+5. > python aggregation_analysis.py
+    1. Reads the classification hit output as well as true labels for 500 images in the classification hit output
+    2. Runs the EM algorithm with gold standard label performance as initial worker quality and plots iteration number vs accuracy on the 500 images
+    3. Runs the EM algorithm without initial worker quality (assumes workers are initially perfect) and plots iteration number vs accuracy on the 500 images
+    4. Runs the EM algorithm with gold standard label performance as initial worker quality and plots iteration number vs individual worker accuracy on the 500 images
+    5. Runs the EM algorithm without initial worker quality (assumes workers are initially perfect) and plots iteration number vs individual worker accuracy on the 500 images
+6. > python model_analysis.py
     1. Reads true classification image labels from data/analysis/image_labels.csv
     2. Compute worker confusion matrices by comparing results in data/classification_hit_output.csv with true labels
     3. Compute model confusion matrix by comparing data/analysis/model_image_labels.csv and true image labels

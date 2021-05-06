@@ -32,7 +32,7 @@ def compute_accuracies(df, labels):
         (cm[0][0] + cm[1][1] + cm[2][2]) / sum([sum(l) for l in cm])
     )
 
-# Plot accuracy vs iteration given dataframes of predicted and true labels
+# Plot iteration number vs accuracy given dataframes of predicted and true labels
 # Start with initial quality specified by worker_qual
 def accuracy_iteration_plot(result_df, true_df, worker_qual):
     init = worker_qual != None
@@ -77,7 +77,7 @@ def accuracy_iteration_plot(result_df, true_df, worker_qual):
         plt.savefig(join(data_dir, analysis_dir, 'accuracy_iteration_without_initial.png'))
     plt.show()
 
-# Plot individual worker_accuracy vs iteration given dataframes of predicted and true labels
+# Plot iteration number vs individual worker_accuracy given dataframes of predicted and true labels
 # Start with initial quality specified by worker_qual
 def worker_accuracy_iteration_plot(result_df, true_df, worker_qual):
     init = worker_qual != None
@@ -136,7 +136,7 @@ def worker_accuracy_iteration_plot(result_df, true_df, worker_qual):
         plt.title("Number of iterations vs worker accuracy with initial worker quality")
         plt.savefig(join(data_dir, analysis_dir, 'worker_accuracy_iteration_with_initial.png'))
     else:
-        plt.title("Number of iterations vs worker accuracy without initial worker quality")
+        plt.title("Number of iterations vs worker accuracy w/o initial worker quality")
         plt.savefig(join(data_dir, analysis_dir, 'worker_accuracy_iteration_without_initial.png'))
     plt.show()
     
@@ -149,9 +149,8 @@ def main():
     df = df.set_index(['Image'])
     # Compute worker quality and confusion matrix from gold standard labels
     _, cm = worker_quality(result_df)
-    # 1 iteration EM with gold standard label performance as initial quality
-    #accuracy_iteration_plot(result_df, df, cm)
-    #accuracy_iteration_plot(result_df, df, None)
+    accuracy_iteration_plot(result_df, df, cm)
+    accuracy_iteration_plot(result_df, df, None)
     worker_accuracy_iteration_plot(result_df, df, cm)
     worker_accuracy_iteration_plot(result_df, df, None)
 

@@ -1,6 +1,7 @@
 from matplotlib.colors import LinearSegmentedColormap
 from os.path import join
 from collections import defaultdict
+from json import loads
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,9 +9,11 @@ import numpy as np
 label_map = {
     "Wearing Mask Correctly": 0,
     "Wearing Mask Incorrectly": 1,
-    "Not Wearing Mask": 2
+    "Not Wearing Mask": 2,
+    "Duplicate": 3,
+    "Unverifiable": 4,
+    "Incorrect": 5
 }
-
 data_dir = '../data'
 analysis_dir = 'analysis'
 
@@ -53,34 +56,83 @@ def calculate_preliminary_model_accuracy(labels):
     quality = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
     for image in labels:
         # Update confusion matrix
+        num = label_map[labels[image]]
         if image in model_labels:
-            quality[label_map[labels[image]]][label_map[model_labels[image]]] += 1
+            quality[num][label_map[model_labels[image]]] += 1
         else:
-            num = label_map[labels[image]]
-            quality[num][(num + 1) % len(label_map)] += 1
+            quality[num][(num + 1) % 3] += 1
 
     return quality
 
+# Calculate model accuracy on classification
+def calculate_model_accuracy():
+    # Read model performance on validation
+    df = pd.read_csv(join(data_dir, analysis_dir, 'model_performance.csv'))
+    # Confusion matrix for 6 bounding box categories and 3 face categories
+    quality = [[0, 0, 0] for _ in range(6)]
+    # Stores average score for each bounding box category
+    avg_scores = [[0, 0] for _ in range(6)]
+    # Stores percentage of faces detected in an image
+    detected_faces = [0, 0]
+    # Iterate over predictions for each validation image
+    for _, row in df.iterrows():
+        # Read columns
+        scores = loads(row['PredictedScores'])
+        labels = loads(row['PredictedLabels'])
+        true_labels = loads(row['Labels'])
+        num_undetected = loads(row['UndetectedFaces'])
+        detected_faces[1] += num_undetected
+        # Iterate over bounding box labels
+        for i, label in enumerate(labels):
+            label = label_map[label]
+            true_label = label_map[true_labels[i]]
+            # Increment confusion matrix
+            quality[true_label][label] += 1
+            # Update scores
+            avg_scores[true_label][0] += scores[i]
+            avg_scores[true_label][1] += scores[i]
+            # Update detection rate
+            if true_label < 3:
+                detected_faces[0] += 1
+                detected_faces[1] += 1
+
+    return quality, [total / num for total, num in avg_scores], detected_faces[0] / detected_faces[1]
+
 # Compute accuracy statistics for workers and model
-def compute_preliminary_statistics(worker_qual, model_qual):
+def accuracy_bar_graph(worker_qual, model_qual, val_model_qual):
     # Aggregate worker results
     total_worker_qual = sum(np.array([cm for cm in worker_qual.values()]))
     # Compute worker accuracies
     worker_total = sum([sum(l) for l in total_worker_qual])
-    worker_accs = [round(l[i] / sum(l), 3) for (i, l) in enumerate(total_worker_qual)]
+    worker_accs = [l[i] / sum(l) for (i, l) in enumerate(total_worker_qual)]
     worker_correct = total_worker_qual[0][0] + total_worker_qual[1][1] + total_worker_qual[2][2]
-    worker_acc = round(worker_correct / worker_total, 3)
+    worker_accs.append(worker_correct / worker_total)
     # Compute model accuracies
     model_total = sum([sum(l) for l in model_qual])
-    model_accs = [round(l[i] / sum(l), 3) for (i, l) in enumerate(model_qual)]
+    model_accs = [l[i] / sum(l) for (i, l) in enumerate(model_qual)]
     model_correct = model_qual[0][0] + model_qual[1][1] + model_qual[2][2]
-    model_acc = round(model_correct / model_total, 3)
-    # Write to CSV
-    df = pd.DataFrame([['Worker', worker_acc, worker_accs[0], worker_accs[1], worker_accs[2]],
-        ['Model', model_acc, model_accs[0], model_accs[1], model_accs[2]]],
-        columns=['Predictor', 'Total Accuracy', 'Wearing Mask Correctly Accuracy',
-            'Wearing Mask Incorrectly Accuracy', 'Not Wearing Mask Accuracy'])
-    df.to_csv(join(data_dir, analysis_dir, 'worker_model_accuracies.csv'), index=False)
+    model_accs.append(model_correct / model_total)
+    # Compute validation model accuracies
+    val_model_total = sum([sum(l) for l in val_model_qual[:3]])
+    val_model_accs = [l[i] / sum(l) for (i, l) in enumerate(val_model_qual[:3])]
+    val_model_correct = val_model_qual[0][0] + val_model_qual[1][1] + val_model_qual[2][2]
+    val_model_accs.append(val_model_correct / val_model_total)
+
+    # Plot graph
+    labels = ['WMC Accuracy', 'WMI Accuracy', 'NWM Accuracy', 'Total Accuracy']
+    x = np.arange(len(labels))
+    width = 0.4
+
+    plt.bar(x-width/2, worker_accs, width, label='Worker')
+    plt.bar(x, model_accs, width, label='Model Training')
+    plt.bar(x+width/2, val_model_accs, width,  label='Model Validation')
+    plt.legend()
+    plt.xticks(x, labels)
+    plt.title("Images labeled vs Accuracy of Workers and FasterRCNN model")
+    plt.xlabel("Categories")
+    plt.ylabel("Percentage Accuracy")
+    plt.savefig(join(data_dir, analysis_dir, 'worker_model_accuracies.png'))
+    plt.show()
 
 
 # Draw scatter plot of workers and model with random and majority baseline
@@ -114,7 +166,7 @@ def preliminary_scatter_plot(worker_qual, model_qual):
     correct = m[0][0] + m[1][1] + m[2][2]
     # Compute baselines
     majority_baseline = max([sum(l) for l in m]) / total
-    random_baseline = 1 / len(label_map)
+    random_baseline = 1 / 3
     min_acc = min([l[i] / sum(l) for i, l in enumerate(m)])
     # Plot graph
     cmap = LinearSegmentedColormap.from_list("", ["red","yellow","green"])
@@ -136,20 +188,6 @@ def preliminary_scatter_plot(worker_qual, model_qual):
     plt.savefig(join(data_dir, analysis_dir, 'worker_model_quality.png'))
     plt.show()
 
-# Calculate model accuracy on segmentation and classification of validation images
-def calculate_model_accuracy():
-    # Read model performance output
-    df = pd.read_csv(join(data_dir, analysis_dir, 'model_performance.csv'))
-    quality = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-    for i, row in df.iterrows():
-        # Update confusion matrix
-        if image in model_labels:
-            quality[label_map[labels[image]]][label_map[model_labels[image]]] += 1
-        else:
-            num = label_map[labels[image]]
-            quality[num][(num + 1) % len(label_map)] += 1
-
-    return quality
 
 def main():
     # Read true labels into dictionary
@@ -157,8 +195,9 @@ def main():
     labels = {k: v for (k, v) in df[['Image', 'Label']].values.tolist()}
     worker_qual = calculate_worker_quality(labels)
     model_qual = calculate_preliminary_model_accuracy(labels)
-    compute_preliminary_statistics(worker_qual, model_qual)
-    preliminary_scatter_plot(worker_qual, model_qual)
+    val_model_qual, scores, detect_rate = calculate_model_accuracy()
+    accuracy_bar_graph(worker_qual, model_qual, val_model_qual)
+    # preliminary_scatter_plot(worker_qual, model_qual)
 
 if __name__ == '__main__':
     main()

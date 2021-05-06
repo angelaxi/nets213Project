@@ -16,7 +16,6 @@ bounding_box_label_map = {
     4: "Duplicate",
     5: "Unverifiable",
     6: "Incorrect",
-
 }
 
 color_map = {
