@@ -141,9 +141,11 @@ def em_vote(rows, worker_qual, iter_num, return_dict=False):
     # Iterate until convergence
     else:
         prev_worker_qual = None
+        i = 1
         while prev_worker_qual != worker_qual:
             prev_worker_qual = worker_qual
             votes, worker_qual = em_iteration(rows, worker_qual)
+            i += 1
     if return_dict:
         return {
             # Get label corresponding to index of max weight
@@ -223,8 +225,5 @@ def main():
     
     create_classification_model_input()
     
-    
-    
-
 if __name__ == '__main__':
     main()

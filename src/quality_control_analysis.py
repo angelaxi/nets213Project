@@ -1,4 +1,4 @@
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap
 from os.path import join
 import pandas as pd
 import matplotlib.pyplot as plt
