@@ -1,3 +1,0 @@
-Predictor,Total Accuracy,Wearing Mask Correctly Accuracy,Wearing Mask Incorrectly Accuracy,Not Wearing Mask Accuracy
-Worker,0.758,0.808,0.48,0.764
-Model,0.985,0.986,0.992,0.978

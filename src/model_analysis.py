@@ -105,17 +105,17 @@ def accuracy_bar_graph(worker_qual, model_qual, val_model_qual):
     total_worker_qual = sum(np.array([cm for cm in worker_qual.values()]))
     # Compute worker accuracies
     worker_total = sum([sum(l) for l in total_worker_qual])
-    worker_accs = [l[i] / sum(l) for (i, l) in enumerate(total_worker_qual)]
+    worker_accs = [0 if sum(l) == 0 else l[i] / sum(l) for (i, l) in enumerate(total_worker_qual)]
     worker_correct = total_worker_qual[0][0] + total_worker_qual[1][1] + total_worker_qual[2][2]
     worker_accs.append(worker_correct / worker_total)
     # Compute model accuracies
     model_total = sum([sum(l) for l in model_qual])
-    model_accs = [l[i] / sum(l) for (i, l) in enumerate(model_qual)]
+    model_accs = [0 if sum(l) == 0 else l[i] / sum(l) for (i, l) in enumerate(model_qual)]
     model_correct = model_qual[0][0] + model_qual[1][1] + model_qual[2][2]
     model_accs.append(model_correct / model_total)
     # Compute validation model accuracies
     val_model_total = sum([sum(l) for l in val_model_qual])
-    val_model_accs = [l[i] / sum(l) for (i, l) in enumerate(val_model_qual)]
+    val_model_accs = [0 if sum(l) == 0 else l[i] / sum(l) for (i, l) in enumerate(val_model_qual)]
     val_model_correct = val_model_qual[0][0] + val_model_qual[1][1] + val_model_qual[2][2]
     val_model_accs.append(val_model_correct / val_model_total)
 
@@ -138,17 +138,20 @@ def accuracy_bar_graph(worker_qual, model_qual, val_model_qual):
 
 # Plot probability of each label given the bounding box label in a bar graph
 def probability_bar_graph(cm):
-    cm = [[x / sum(l) for x in l] for l in cm]
+    cm = [[0 if sum(l) == 0 else x / sum(l) for x in l] for l in cm]
     labels = ['WMC', 'WMI', 'NWM', 'Duplicate', 'Unverifiable', 'Incorrect']
-    x = np.arange(len(labels)) * 5
-    width = 2
-    plt.bar(x, scores, width=width, color=['green', 'yellow', 'red', 'blue', 'orange', 'purple'])
+    x = np.arange(len(labels)) * 2
+    width = 0.4
+    plt.bar(x - width, [l[0] for l in cm], width=width, label='WMC')
+    plt.bar(x, [l[1] for l in cm], width=width, label='WMI')
+    plt.bar(x + width, [l[2] for l in cm], width=width, label='NWM')
     plt.title('Probability distribution of mask categories given bounding box categories')
     plt.xticks(x, labels)
     plt.xlabel('Bounding Box Categories')
-    plt.ylabel('Percentage Confidence')
+    plt.ylabel('Percentage Distribution')
+    plt.legend()
     plt.ylim((0, 1))
-    plt.savefig(join(data_dir, analysis_dir, 'model_scores.png'))
+    plt.savefig(join(data_dir, analysis_dir, 'bounding_box_label_probabilities.png'))
     plt.show()
 
 # Plot average scores for each bounding box category
@@ -165,6 +168,7 @@ def scores_bar_graph(scores):
     plt.savefig(join(data_dir, analysis_dir, 'model_scores.png'))
     plt.show()
 
+# Plot face detection rate and bounding box category makeup
 def detection_rate_pie_chart(detect_rate):
     labels = ['Detected', 'Undetected']
     sizes = detect_rate[::4]
@@ -180,13 +184,13 @@ def detection_rate_pie_chart(detect_rate):
     plt.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%',
         shadow=True, startangle=10, colors=['green', 'blue', 'orange', 'purple'])
     plt.title('Percentage makeup of model bounding boxes')
-    plt.savefig(join(data_dir, analysis_dir, 'bounding_boxe_categories.png'))
+    plt.savefig(join(data_dir, analysis_dir, 'bounding_box_categories.png'))
     plt.show()
 
 # Draw scatter plot of workers and model with random and majority baseline
 # Plot Image labeled vs Accuracy
 # Color map that highlights minimum accuracy of each worker across all categories
-def preliminary_scatter_plot(worker_qual, model_qual):
+def scatter_plot(worker_qual, model_qual, val_model_qual):
     xs = []
     ys = []
     cs = []
@@ -204,7 +208,7 @@ def preliminary_scatter_plot(worker_qual, model_qual):
         xs.append(total)
         ys.append(correct / total)
         # Find least accurate category
-        min_acc = min([l[i] / sum(l) for i, l in enumerate(m)])
+        min_acc = min([l[i] / sum(l) for i, l in enumerate(m) if sum(l) > 0])
         cs.append(min_acc)
     # Compute graph values for model
     m = model_qual
@@ -212,24 +216,38 @@ def preliminary_scatter_plot(worker_qual, model_qual):
     if total > max_total:
         max_total = total
     correct = m[0][0] + m[1][1] + m[2][2]
+    min_acc = min([l[i] / sum(l) for i, l in enumerate(m) if sum(l) > 0])
+    # Compute graph values for validation model
+    val_m = val_model_qual
+    val_total = sum([sum(l) for l in val_m])
+    if val_total > max_total:
+        max_total = val_total
+    val_correct = val_m[0][0] + val_m[1][1] + val_m[2][2]
+    val_min_acc = min([l[i] / sum(l) for i, l in enumerate(val_m) if sum(l) > 0])
     # Compute baselines
     majority_baseline = max([sum(l) for l in m]) / total
+    val_majority_baseline = max([sum(l) for l in val_m]) / val_total
     random_baseline = 1 / 3
-    min_acc = min([l[i] / sum(l) for i, l in enumerate(m)])
     # Plot graph
     cmap = LinearSegmentedColormap.from_list("", ["red","yellow","green"])
     plt.scatter(xs, ys, c=cs, cmap=cmap, vmin=0, vmax=1)
     plt.scatter([total], [correct / total], s = 100, label="FasterRCNN", c=[min_acc], cmap=cmap, vmin=0, vmax=1)
+    plt.scatter([val_total], [val_correct / val_total], s = 100, label="FasterRCNN Validation", c=[val_min_acc], cmap=cmap, vmin=0, vmax=1)
     plt.annotate("FasterRCNN", (total - 2000, correct / total + 0.015))
+    plt.annotate("FasterRCNN Validation", (val_total - 250, val_correct / val_total - 0.04))
+    plt.legend()
+    plt.annotate("Validation Majority Baseline", (100, val_majority_baseline + 0.01))
+    plt.annotate("Majority Baseline", (100, majority_baseline + 0.01))
+    plt.annotate("Random Baseline", (100, random_baseline + 0.01))
+    plt.plot([0, max_total + 1000], [val_majority_baseline, val_majority_baseline], color=cmap(0), label="Validation Majority Baseline")
     plt.plot([0, max_total + 1000], [majority_baseline, majority_baseline], color=cmap(0), label="Majority Baseline")
     plt.plot([0, max_total + 1000], [random_baseline, random_baseline], color=cmap(random_baseline), label="Random Baseline")
     plt.title("Images labeled vs Accuracy of Workers and FasterRCNN model")
     plt.xlabel("Images labeled")
-    plt.ylabel("Accuracy")
+    plt.ylabel("Percentage Accuracy")
     plt.xscale("log")
     plt.xlim((7, max_total + 1000))
     plt.ylim((0.3, 1.05))
-    plt.legend()
     cbar = plt.colorbar()
     cbar.ax.get_yaxis().labelpad = 15
     cbar.ax.set_ylabel('Minimum accuracy across all mask categories', rotation=270)
@@ -248,7 +266,7 @@ def main():
     probability_bar_graph(val_model_qual)
     scores_bar_graph(scores)
     detection_rate_pie_chart(detect_rate)
-    scatter_plot(worker_qual, model_qual, val_model_qual)
+    scatter_plot(worker_qual, model_qual, val_model_qual[:3])
 
 if __name__ == '__main__':
     main()

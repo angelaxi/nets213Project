@@ -8,11 +8,15 @@ Our project, WYM - Wear Your Mask, is a live application that utilizes camera re
 - analysis: directory containing analysis files after performance quality control and aggregation
     - accuracy_iteration_with_initial.png: plot of iteration number vs accuracy with gold standard quality as initial quality
     - accuracy_iteration_without_initial.png: plot of iteration number vs accuracy assuming all workers are initially perfect
+    - bounding_box_label_probabilities.png: Bar graph representing probability distribution of mask labels for each bounding box label
+    - bounding_box_categories.png: Pie chart representing percentage makeup of each bounding box category
+    - facee_detect.png: Pie chart representing percentage of faces detected and undetected by model
     - gold_standard_quality.csv: quality control output for every worker with tasks completed, average time spent on each task, accuracy for each face category, total accuracy, and whether or not the worker is a good worker
     - image_labels.csv: aggregation output from running EM with gold standard performance as initial quality for 1 iteration
     - model_image_labels.csv: model predictions on labels for classification images
     - model_image_preds.csv: model predictions on validation images including a list of bounding boxes, a list of labels corresponding to each bounding box, and a list a scores that the model assigns to each bounding box prediction
     - model_performance.csv: model performance on validation images containing bounding boxes, predicted labels, scores for prediction, true labels, and number of undetected faces identified by user
+    - model_scores.png: Bar graph representing average confidence scores for each bounding box category
     - worker_accuracy_iteration_with_initial.png: plot of iteration number vs individual worker accuracy with gold standard quality as initial quality
     - worker_accuracy_iteration_without_initial.png: plot of iteration number vs individual worker accuracy assuming all workers are initially perfect
     - worker_model_accuracies.png: bar graph representing accuracies of all workers combined and our model on labeling classification images and validation images
@@ -166,25 +170,6 @@ Refer to README.md in src directory for information on how to run code
         - threshold: float representing percentage threshold
         - output: mapped indices of true bounding boxes for each predicted bounding box
     - Execute with --show-ui option to display image with bounding boxes along the way. Press q to quit and any other key to display the next image.
-- <b>model_analysis.py</b>: Computes worker and model quality and plots results with baselines
-    - <i>calculate_worker_quality(labels)</i>: Calculate worker confusion matrices
-        - labels: dictionary mapping image file name to label
-        - output: confusion matrices for each worker
-    - <i>calculate_preliminary_model_accuracy(labels)</i>: Calculate model confusion matrix from data/analysis.model_image_labels.csv
-        - labels: dictionary mapping image file name to label
-        - output: confusion matrices for model
-    - <i>calculate_model_accuracy()</i>: Calculate model confusion matrices, average scores, and percentage face detection
-        - output:
-            - 6 x 3 confusion matrix for 6 bounding box categories and 3 face categories
-            - List of 6 average scores corresponding to each bounding box category
-            - Percentage of faces detected on average
-    - <i>accuracy_bar_graph(worker_qual, model_qual, val_model_qual)</i>: Compute accuracy statistics for workers and model:
-        - worker_qual: confusion matrices for each worker
-        - model_qual: model confusion matrix
-        - val_model_qual: validation model confusion matrix
-    - <i>preliminary_scatter_plot(worker_qual, model_qual)</i>: Plot worker and model quality along with baselines
-        - worker_qual: confusion matrices for each worker
-        - model_qual: model confusion matrix
 - <b>model_predict.py</b>: Computes model predictions on validation images
     - Default directory path of data/validation_images
     - Execute with -i option followed by a path to a directory with images to predict on different images
@@ -216,7 +201,31 @@ Refer to README.md in src directory for information on how to run code
         - result_df: dataframe containing results from classification HITs
         - true_df: dataframe containing true labels
         - worker_qual: initial worker quality to use for EM algorithm
-
+- <b>model_analysis.py</b>: Computes worker and model quality and plots results with baselines
+    - <i>calculate_worker_quality(labels)</i>: Calculate worker confusion matrices
+        - labels: dictionary mapping image file name to label
+        - output: confusion matrices for each worker
+    - <i>calculate_preliminary_model_accuracy(labels)</i>: Calculate model confusion matrix from data/analysis.model_image_labels.csv
+        - labels: dictionary mapping image file name to label
+        - output: confusion matrices for model
+    - <i>calculate_model_accuracy()</i>: Calculate model confusion matrices, average scores, and percentage face detection
+        - output:
+            - 6 x 3 confusion matrix for 6 bounding box categories and 3 face categories
+            - List of 6 average scores corresponding to each bounding box category
+            - Percentage of faces detected on average
+    - <i>accuracy_bar_graph(worker_qual, model_qual, val_model_qual)</i>: Plot accuracy statistics for workers and model in a bar graph
+        - worker_qual: confusion matrices for each worker
+        - model_qual: model confusion matrix
+        - val_model_qual: validation model confusion matrix
+    - <i>probability_bar_graph(cm)</i>: Plot probability of each label given the bounding box label in a bar graph
+    - <i>scores_bar_graph(scores)</i>: Plot average confidence score for each bounding box category
+        - scores: list of average confidence scores for each category
+    - <i>detection_rate_pie_chart(detect_rate)</i>: Plot face detection rate and bounding box category makeup
+        - detect rate: list containing number of incidences of each bounding box category as well as number of faces not detected
+    - <i>scatter_plot(worker_qual, model_qual, val_model_qual)</i>: Plot worker and model quality along with baselines
+        - worker_qual: confusion matrices for each worker
+        - model_qual: model confusion matrix
+        - val_model_qual: model validation confusion matrix
 ## hit_templates
 HTML code for HIT templates
 - bounding_box_mockup.html: Template for face bounding box HIT task
@@ -293,7 +302,7 @@ With this, we can determine how well the model can recognize faces, how often it
     - To show images with predicted and true bounding boxes run:
     > python generate_model_predictions.py --show-ui
     - Press q to quit and any other key to display the next image.
-    - Developer and Instructor Note: This code will take several hours to run and you do not need to run it because the output csv is saved as data/analysis/model_image_labels.csv
+    - Developer and Instructor Note: This code will take several hours to run and you do not need to run it because the output csv is saved as data/analysis/model_image_labels.csv. Running it will rewrite the output csv so if you do not run the script in full, be sure to reset the git repository.
     1. Reads data/classifier_input.csv to get true bounding boxes and labels for each image
     2. Make predictions on each image using model/faster_rcnn_model.pt and remove duplicate bounding boxes
     3. Map predicted bounding boxes to true bounding boxes
@@ -301,13 +310,13 @@ With this, we can determine how well the model can recognize faces, how often it
     5. Save predicted labels for each bounding box image in data/analysis/model_image_labels.csv
 2. > python model_predict.py
     - Defaults to data/validation_images directory
-    - To specify a diffirent directory, run with -i option followed by path
+    - To specify a different directory, run with -i option followed by path
     1. Reads all images in the validation image directory
     2. Compute model predictions on all validation images
     3. Save predictions in data/analysis/model_image_preds.csv
 3. > python model_validation.py
     - Defaults to data/validation_images directory
-    - To specify a diffirent directory, run with -i option followed by path
+    - To specify a different directory, run with -i option followed by path
     - Developer and Instructor Note: This code requires manual work and you do not need to run it because the output csv is saved as data/analysis/model_performance.csv
     1. Displays bounding boxes for each image to users 1 by 1
     2. Asks user to determine if bounding box is:
@@ -333,5 +342,9 @@ With this, we can determine how well the model can recognize faces, how often it
     1. Reads true classification image labels from data/analysis/image_labels.csv
     2. Compute worker confusion matrices by comparing results in data/classification_hit_output.csv with true labels
     3. Compute model confusion matrix by comparing data/analysis/model_image_labels.csv and true image labels
-    4. Compute accuracy statistics for workers and model using confusion matrix and save to data/analysis/worker_model_accuracies.csv
-    5. Plots images labeled vs accuracy for workers and model along with majority and random baselines and saves figure as data/analysis/worker_model_quality.png
+    4. Compute model validation confusion matrix by readding data/analysis/model_performance.csv
+    5. Plots accuracy statistics for workers and our model using the respective confusion matrices
+    6. Plots probability distribution for each bounding box categories
+    7. Plots average confidence scores for each bounding box categories
+    8. Plots pie charts for face detection rate and bounding box category makeup
+    9. Plots images labeled vs accuracy for workers and model along with majority and random baselines
