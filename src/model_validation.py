@@ -135,7 +135,7 @@ def main():
         frame = cv2.imread(join(image_dir, image))
         width = frame.shape[1]
         height = frame.shape[0]
-        scale = min(630 / height, 1120 / width)
+        scale = min(540 / height, 960 / width)
         scale_width = int(scale * width)
         scale_height = int(scale * height)
         frame = cv2.resize(frame, (scale_width, scale_height))
