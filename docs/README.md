@@ -311,13 +311,14 @@ With this, we can determine how well the model can recognize faces, how often it
 2. > python model_predict.py
     - Defaults to data/validation_images directory
     - To specify a different directory, run with -i option followed by path
+    - Developer and Instructor Note: This code will take an hour to run and you do not need to run it because the output csv is saved as data/analysis/model_image_preds.csv.
     1. Reads all images in the validation image directory
     2. Compute model predictions on all validation images
     3. Save predictions in data/analysis/model_image_preds.csv
 3. > python model_validation.py
     - Defaults to data/validation_images directory
     - To specify a different directory, run with -i option followed by path
-    - Developer and Instructor Note: This code requires manual work and you do not need to run it because the output csv is saved as data/analysis/model_performance.csv
+    - Developer and Instructor Note: This code requires manual work and you do not need to run it because the output csv is saved as data/analysis/model_performance.csv. Saves the work in the output csv as you go so if you want to test, you must first delete the output csv.
     1. Displays bounding boxes for each image to users 1 by 1
     2. Asks user to determine if bounding box is:
         - Verifiable (You can label the face in the image)

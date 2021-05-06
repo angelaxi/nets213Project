@@ -2,6 +2,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from os.path import join
 from collections import defaultdict
 from json import loads
+from math import log
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -97,7 +98,7 @@ def calculate_model_accuracy():
             else:
                 detected_faces[true_label - 2] += 1
 
-    return quality, [total / num for total, num in avg_scores], detected_faces
+    return quality, [0 if num == 0 else total / num for total, num in avg_scores], detected_faces
 
 # Compute accuracy statistics for workers and model
 def accuracy_bar_graph(worker_qual, model_qual, val_model_qual):
@@ -233,12 +234,13 @@ def scatter_plot(worker_qual, model_qual, val_model_qual):
     plt.scatter(xs, ys, c=cs, cmap=cmap, vmin=0, vmax=1)
     plt.scatter([total], [correct / total], s = 100, label="FasterRCNN", c=[min_acc], cmap=cmap, vmin=0, vmax=1)
     plt.scatter([val_total], [val_correct / val_total], s = 100, label="FasterRCNN Validation", c=[val_min_acc], cmap=cmap, vmin=0, vmax=1)
-    plt.annotate("FasterRCNN", (total - 2000, correct / total + 0.015))
-    plt.annotate("FasterRCNN Validation", (val_total - 250, val_correct / val_total - 0.04))
+    plt.annotate("FasterRCNN", (total, correct / total), ha='center')
+    plt.annotate("FasterRCNN Validation", (val_total, val_correct / val_total), ha='center')
     plt.legend()
-    plt.annotate("Validation Majority Baseline", (100, val_majority_baseline + 0.01))
-    plt.annotate("Majority Baseline", (100, majority_baseline + 0.01))
-    plt.annotate("Random Baseline", (100, random_baseline + 0.01))
+    mid = pow(10, log(7 * (max_total + 1000), 10) / 2)
+    plt.annotate("Validation Majority Baseline", (mid, val_majority_baseline), ha='center')
+    plt.annotate("Majority Baseline", (mid, majority_baseline), ha='center')
+    plt.annotate("Random Baseline", (mid, random_baseline), ha='center')
     plt.plot([0, max_total + 1000], [val_majority_baseline, val_majority_baseline], color=cmap(0), label="Validation Majority Baseline")
     plt.plot([0, max_total + 1000], [majority_baseline, majority_baseline], color=cmap(0), label="Majority Baseline")
     plt.plot([0, max_total + 1000], [random_baseline, random_baseline], color=cmap(random_baseline), label="Random Baseline")
